@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 void deselection_sort(int a[], int lo, int hi)
 {
   if (hi - lo < 2)
@@ -64,19 +62,4 @@ void selection_sort(int a[], int lo, int hi)
 		a[right_pass] = a[max_elem_idx];
 		a[max_elem_idx] = t;
 	}
-}
-
-static int a[100];
-
-int main(void)
-{
-	for (int i = 0; i < 100; ++i)
-		a[i] = 99 - i;
-
-	selection_sort(a, 0, 100);
-
-	for (int i = 0; i < 100; ++i)
-		printf("%d\n", a[i]);
-
-	return 0;
 }

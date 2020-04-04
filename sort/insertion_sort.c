@@ -1,5 +1,3 @@
-#include "insertion_sort.h"
-
 static const int BINARY_INSERTION_SORT_THRESHOLD = 47;
 
 inline void insertion_sort1(int a[], int lo, int hi)

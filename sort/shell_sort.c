@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
 static const int SedgewickGap[] = {
 	0, 1, 5, 19, 41, 109, 209, 505, 929, 2161, 3905, 8929, 16001,
 };
@@ -66,22 +62,4 @@ void shellSort2(int a[], int lo, int hi)
 			a[j] = pivot;
 		}
 	}
-}
-
-static int n[3000];
-
-int main(void) {
-	for (int i = 0; i < 3000; ++i)
-		n[i] = 3000 - i;
-
-
-
-	shellSort2(n, 0, 3000);
-
-	for (int i = 0; i < 3000; ++i) {
-		printf("%d ", n[i]);
-		if (i % 10 == 0)
-			puts(" ");
-	}
-	return 0;
 }

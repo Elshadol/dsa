@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 static const int QUICKSORT_MIN_RANGE = 29;
 
 static inline int _median3(int a, int b, int c)
@@ -72,21 +70,4 @@ void quicksort(int a[], int lo, int hi)
 		quicksort(a, lo, cut);
 		lo = cut;
 	}
-}
-
-static int a[2000];
-
-int main(void) {
-	for (int i = 0; i < 2000; ++i)
-		a[i] = 2000- i;
-
-
-	quicksort(a, 0, 2000);
-
-	for (int i = 0; i < 2000; ++i) {
-		printf("%d ", a[i]);
-		if (i % 10 == 0)
-			puts(" ");
-	}
-	return 0;
 }
