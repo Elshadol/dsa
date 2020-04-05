@@ -1,4 +1,4 @@
-static const int QUICKSORT_MIN_RANGE = 29;
+static const int QUICKSORT_MIN_RANGE = 32;
 
 static inline int _median3(int a, int b, int c)
 {
@@ -22,12 +22,15 @@ static inline int _median3(int a, int b, int c)
 static int _partition(int a[], int lo, int hi, int pivot)
 {
 	for (; ;) {
-		while (a[lo] < pivot) ++lo;
+		while (a[lo] < pivot)
+			++lo;
 
 		--hi;
-		while (pivot < a[hi]) -- hi;
+		while (pivot < a[hi])
+			-- hi;
 
-		if (hi <= lo) return lo;
+		if (hi <= lo)
+			return lo;
 
 		int t = a[lo];
 		a[lo] = a[hi];
@@ -63,11 +66,6 @@ void quicksort(int a[], int lo, int hi)
 	int pivot = _median3(a[lo], a[lo + (hi - lo)/2], a[hi - 1]);
 	int cut = _partition(a, lo, hi, pivot);
 
-	if (cut - lo < hi - cut) {
-		quicksort(a, cut, hi);
-		hi = cut;
-	} else {
-		quicksort(a, lo, cut);
-		lo = cut;
-	}
+	quicksort(a, lo, cut);
+	quicksort(a, cut + 1, hi);
 }

@@ -1,14 +1,13 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 
 static const int MIN_MERGE = 32;
 
-static inline void insertionSort(int a[], int lo, int hi)
+static inline void insertion_sort(int a[], int lo, int hi)
 {
 	for (int i = lo + 1; i < hi; ++i) {
-		int j = i;
 		int pivot = a[i];
+
+		int j = i;
 		for (; (lo < j) && (pivot < a[j - 1]); --j)
 			a[j] = a[j - 1];
 
@@ -17,8 +16,8 @@ static inline void insertionSort(int a[], int lo, int hi)
 }
 
 /*
- * a[lo, mi) and a[mi, hi) are sorted
- * merge a[lo, mi) and a[mi, hi) to form a[lo, hi)
+ * a[lo, mi) and a[mi, hi) are sorted,
+ * merge a[lo, mi) and a[mi, hi) to a[lo, hi)
  */
 static inline void _merge(int a[], int lo, int mi, int hi, int aux[])
 {
@@ -35,10 +34,43 @@ static inline void _merge(int a[], int lo, int mi, int hi, int aux[])
 	}
 }
 
+static inline void _reverse(int a[], int lo, int hi)
+{
+	while (lo < --hi) {
+		int t = a[hi];
+		a[hi] = a[lo];
+		a[lo] = t;
+		++lo;
+	}
+}
+
+static inline void _rotate(int a[], int lo, int mi, int hi)
+{
+	_reverse(a, lo, mi);
+	_reverse(a, mi, hi);
+	_reverse(a, lo, hi);
+}
+
+static void _inplace_merge(int a[], int lo, int mi, int hi)
+{
+	while ((lo < mi) && (mi < hi)) {
+		while ((lo < mi) && (a[lo] < a[mi]))
+			++lo;
+
+		int idx = mi;
+		while ((mi < hi) && (a[mi] < a[lo]))
+			++mi;
+
+		if (lo != idx)
+			_rotate(a, lo, idx, mi);
+		lo += mi -idx;
+	}
+}
+
 void _merge_sort(int a[], int lo, int hi, int aux[])
 {
 	if (hi - lo < MIN_MERGE) {
-		insertionSort(a, lo, hi);
+		insertion_sort(a, lo, hi);
 		return;
 	}
 
@@ -48,49 +80,52 @@ void _merge_sort(int a[], int lo, int hi, int aux[])
 	_merge(a, lo, mi, hi, aux);
 }
 
-void mergeSort1(int a[], int lo, int hi)
+void _inplace_merge_sort(int a[], int lo, int hi)
 {
-	assert(lo < hi);
+	if (hi - lo < MIN_MERGE) {
+		insertion_sort(a, lo, hi);
+		return;
+	}
+
+	int mi = lo + (hi - lo)/2;
+	_inplace_merge_sort(a, lo, mi);
+	_inplace_merge_sort(a, mi, hi);
+	_inplace_merge(a, lo, mi, hi);
+}
+
+void merge_sort1(int a[], int lo, int hi)
+{
 
 	if (hi - lo < 2)
 		return;
 
-	int *aux = (int *)malloc(sizeof(a[lo]) * (hi - lo) / 2);
+	int *aux = NULL; //(int *)malloc(sizeof(a[lo]) * (hi - lo) / 2);
 	if (aux != NULL) {
 		_merge_sort(a, lo, hi, aux);
 		free(aux);
 	}
-#if 0
 	else {
-		_inplace_merge(a, lo, hi);
+		_inplace_merge_sort(a, lo, hi);
 	}
-#endif
 }
 
-void mergeSort2(int a[], int lo, int hi)
+void merge_sort2(int a[], int lo, int hi)
 {
-	assert(lo < hi);
-
-	const int n = hi - lo;
-	if (n < 2)
+	const int N = hi - lo;
+	if (N < 2)
 		return;
 
-	if (n < MIN_MERGE) {
-		insertionSort(a, lo, hi);
-		return;
-	}
-
-	int *aux = (int *)malloc(sizeof(a[lo]) * n / 2);
-	if (aux != NULL) {
+	int *aux = (int *)malloc(sizeof(a[lo]) * N);
 		// sort a[lo, lo+MIN_MERGE), a[lo+MIN_MERGE, lo+2*MIN_MERGE), etc
-		int i = lo;
-		for (; i + MIN_MERGE <= hi; i += MIN_MERGE)
-			insertionSort(a, i, i + MIN_MERGE);
+	int i = lo;
+	for (; i + MIN_MERGE <= hi; i += MIN_MERGE)
+		insertion_sort(a, i, i + MIN_MERGE);
 
-		if (i < hi)
-			insertionSort(a, i, hi);
+	if (i < hi)
+		insertion_sort(a, i, hi);
 
-		for (int length = MIN_MERGE; length < n; length *= 2) {
+	if (aux != NULL) {
+		for (int length = MIN_MERGE; length < N; length *= 2) {
 			// merge a[lo, lo+length) and a[lo+length, lo+2*length)
 			for (i = lo; i + 2*length <= hi; i += 2*length)
 				_merge(a, i, i + length, i + 2*length, aux);
@@ -98,27 +133,12 @@ void mergeSort2(int a[], int lo, int hi)
 				_merge(a, i, i + length, hi, aux);
 		}
 		free(aux);
+	} else {
+		for (int length = MIN_MERGE; length < N; length *= 2) {
+			for (i = lo; i + 2*length <= hi; i += 2*length)
+				_inplace_merge(a, i, i + length, i + 2*length);
+			if (i + length < hi)
+				_inplace_merge(a, i, i + length, hi);
+		}
 	}
-#if 0
-	else {
-		_inplace_merge(a, lo, hi);
-	}
-#endif
-}
-
-static int a[2000];
-
-int main(void) {
-	for (int i = 0; i < 2000; ++i)
-		a[i] = 2000- i;
-
-
-	mergeSort1(a, 0, 2000);
-
-	for (int i = 0; i < 2000; ++i) {
-		printf("%d ", a[i]);
-		if (i % 10 == 0)
-			puts(" ");
-	}
-	return 0;
 }
