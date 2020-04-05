@@ -43,6 +43,7 @@ static inline int _adjust_after_pop_front(int a[], int N)
 	return p;
 }
 
+/* regard a[0, last) as a max-heap, and insert val to it */
 static inline void _push_heap(int a[], int last, int val)
 {
 	int i = last;
