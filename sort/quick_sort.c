@@ -19,8 +19,10 @@ static inline int _median3(int a, int b, int c)
 	}
 }
 
-static int _partition(int a[], int lo, int hi, int pivot)
+static int _partition(int a[], int lo, int hi)
 {
+	int pivot = _median3(a[lo], a[lo + (hi - lo)/2], a[hi - 1]);
+
 	for (; ;) {
 		while (a[lo] < pivot)
 			++lo;
@@ -63,8 +65,7 @@ void quicksort(int a[], int lo, int hi)
 		return;
 	}
 
-	int pivot = _median3(a[lo], a[lo + (hi - lo)/2], a[hi - 1]);
-	int cut = _partition(a, lo, hi, pivot);
+	int cut = _partition(a, lo, hi);
 
 	quicksort(a, lo, cut);
 	quicksort(a, cut + 1, hi);
