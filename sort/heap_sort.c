@@ -20,7 +20,7 @@ static void _percolate_down(int a[], int N, int p)
 	a[p] = temp;
 }
 
-static inline void heapificate(int a[], int N)
+static inline void _heapificate(int a[], int N)
 {
 	// at beginning, i is the last internal node of the bst
 	for (int i = PARENT_OF(N - 1); 0 <= i; --i)
@@ -63,7 +63,7 @@ void heap_sort(int a[], int lo, int hi)
 
 	int *b = a + lo;
 	int N = hi - lo;
-	heapificate(b, N);
+	_heapificate(b, N);
 
 
 	/*
@@ -90,7 +90,7 @@ void heap_sort1(int a[], int lo, int hi)
 	/*
 	 * 1. put items into a valid max-heap;
 	 */
-	heapificate(b, N);
+	_heapificate(b, N);
 
 	for (int i = N; 0 < i; --i) {
 		/*
