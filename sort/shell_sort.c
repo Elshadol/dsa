@@ -67,7 +67,7 @@ void shell_sort2(int a[], int lo, int hi)
 	}
 }
 
-void shell_sort3(int a[], int lo, int hi)
+void shell_sort(int a[], int lo, int hi)
 {
 	int h = 1;
 

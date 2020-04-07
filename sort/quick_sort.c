@@ -1,5 +1,11 @@
+#include <time.h>
+#include <stdlib.h>
+
+#include "common.h"
+
 static const int QUICKSORT_MIN_RANGE = 32;
 
+#if 0
 static inline int _median3(int a, int b, int c)
 {
 	if (a < b) {
@@ -18,28 +24,25 @@ static inline int _median3(int a, int b, int c)
 			return b;
 	}
 }
+#endif
 
+
+// a[lo, hi)
 static int _partition(int a[], int lo, int hi)
 {
-	int pivot = _median3(a[lo], a[lo + (hi - lo)/2], a[hi - 1]);
+	swap(&a[lo], &a[lo + (rand() % (hi - lo))]);
 
-	for (; ;) {
-		while (a[lo] < pivot)
-			++lo;
+	int pivot = a[lo];
+	int mi = lo;
 
-		--hi;
-		while (pivot < a[hi])
-			-- hi;
-
-		if (hi <= lo)
-			return lo;
-
-		int t = a[lo];
-		a[lo] = a[hi];
-		a[hi] = t;
-
-		++lo;
+	// loop invariant: a[lo + 1, mi) < pivot
+	for (int k = lo + 1; k < hi; ++k) {
+		if (a[k] < pivot)
+			swap(&a[++mi], &a[k]);
 	}
+
+	swap(&a[mi], &a[lo]);
+	return mi;
 }
 
 static inline void insertion_sort(int a[], int lo, int hi)
@@ -55,7 +58,7 @@ static inline void insertion_sort(int a[], int lo, int hi)
 	}
 }
 
-void quicksort(int a[], int lo, int hi)
+void quick_sort(int a[], int lo, int hi)
 {
 	if (hi - lo < 2)
 		return;
@@ -67,6 +70,6 @@ void quicksort(int a[], int lo, int hi)
 
 	int cut = _partition(a, lo, hi);
 
-	quicksort(a, lo, cut);
-	quicksort(a, cut + 1, hi);
+	quick_sort(a, lo, cut);
+	quick_sort(a, cut + 1, hi);
 }

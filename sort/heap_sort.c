@@ -1,5 +1,6 @@
 #define PARENT_OF(i) (((i) - 1) / 2)
-#define LEFT_CHILD_OF(i) ((i) * 2 + 1)
+#define LEFT_CHILD_OF(p) ((p) * 2 + 1)
+#define RIGHT_CHILD_OF(p) ((p) * 2 + 2)
 
 static void _percolate_down(int a[], int N, int p)
 {
@@ -10,36 +11,38 @@ static void _percolate_down(int a[], int N, int p)
 		if ((c + 1 < N) && (a[c] < a[c + 1]))
 			++c;
 
-		if (temp > a[c])
+		if (a[c] < temp)
 			break;
 
 		a[p] = a[c];
 		p = c;
 		c = LEFT_CHILD_OF(p);
 	}
+
 	a[p] = temp;
 }
 
-static inline void _heapificate(int a[], int N)
-{
-	// at beginning, i is the last internal node of the bst
-	for (int i = PARENT_OF(N - 1); 0 <= i; --i)
-		_percolate_down(a, N, i);
-}
-
-static inline int _adjust_after_pop_front(int a[], int N)
+// a[0, N) used to be a max-heap,
+static inline int _adjust_after_pop_heap(int a[], int N)
 {
 	int p = 0;
-	int c = LEFT_CHILD_OF(p);
+	int c = RIGHT_CHILD_OF(p);
 
 	while (c < N) {
-		if ((c + 1 < N) && (a[c] < a[c + 1]))
-			++c;
+		if (a[c] < a[c - 1])
+			--c;
 
 		a[p] = a[c];
 		p = c;
-		c = LEFT_CHILD_OF(p);
+		c = RIGHT_CHILD_OF(p);
 	}
+
+	// no right child, only have left one
+	if (c == N) {
+		a[p] = a[c - 1];
+		p = c - 1;
+	}
+
 	return p;
 }
 
@@ -54,6 +57,14 @@ static inline void _push_heap(int a[], int last, int val)
 	}
 
 	a[i]  = val;
+}
+
+static inline void _heapificate(int a[], int N)
+{
+	// at beginning, i is the last internal node of the bst
+	for (int i = PARENT_OF(N - 1); 0 <= i; --i) {
+		_percolate_down(a, N, i);
+	}
 }
 
 void heap_sort(int a[], int lo, int hi)
@@ -104,7 +115,7 @@ void heap_sort1(int a[], int lo, int hi)
 		 * Recursively repeat step 3, redifining V to be the new vacancy,
 		 * until reach the bottom of the heap
 		 */
-		int last = _adjust_after_pop_front(b, i);
+		int last = _adjust_after_pop_heap(b, i);
 		int right = b[i - 1];
 		_push_heap(b, last, right);
 
