@@ -1,9 +1,15 @@
 #include <time.h>
 #include <stdlib.h>
 
-#include "common.h"
 
 static const int QUICKSORT_MIN_RANGE = 32;
+
+static inline void swap(int *a, int *b)
+{
+	int t = *a;
+	*a = *b;
+	*b = t;
+}
 
 #if 0
 static inline int _median3(int a, int b, int c)
