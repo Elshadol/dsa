@@ -2,17 +2,6 @@
 
 static const int MIN_MERGE = 32;
 
-static inline int _min_run_length(int n)
-{
-	int r = 0;
-	while (n >= MIN_MERGE) {
-		r |= (n & 1);
-		n >>= 1;
-	}
-
-	return (n + r);
-}
-
 static inline void insertion_sort(int a[], int lo, int hi)
 {
 	for (int i = lo + 1; i < hi; ++i) {
@@ -74,7 +63,7 @@ static void _inplace_merge(int a[], int lo, int mi, int hi)
 
 		if (lo != idx)
 			_rotate(a, lo, idx, mi);
-		lo += mi -idx;
+		lo += mi - idx;
 	}
 }
 
@@ -120,6 +109,18 @@ void merge_sort1(int a[], int lo, int hi)
 	}
 }
 
+static inline int _min_run_length(int n)
+{
+	int r = 0;
+	while (n >= MIN_MERGE) {
+		r |= (n & 1);
+		n >>= 1;
+	}
+
+	return (n + r);
+}
+
+// non-recursive merge_sort
 void merge_sort2(int a[], int lo, int hi)
 {
 	const int N = hi - lo;
@@ -128,8 +129,7 @@ void merge_sort2(int a[], int lo, int hi)
 
 	int run_len = _min_run_length(N);
 
-	int *aux = (int *)malloc(sizeof(a[lo]) * N);
-		// sort a[lo, lo+run_len), a[lo+run_len, lo+2*run_len), etc
+	// sort a[lo, lo+run_len), a[lo+run_len, lo+2*run_len), etc
 	int i = lo;
 	for (; i + run_len <= hi; i += run_len)
 		insertion_sort(a, i, i + run_len);
@@ -137,9 +137,10 @@ void merge_sort2(int a[], int lo, int hi)
 	if (i < hi)
 		insertion_sort(a, i, hi);
 
+	// merge runs
+	int *aux = (int *)malloc(sizeof(a[lo]) * N);
 	if (aux != NULL) {
 		for (int length = run_len; length < N; length *= 2) {
-			// merge a[lo, lo+length) and a[lo+length, lo+2*length)
 			for (i = lo; i + 2*length <= hi; i += 2*length)
 				_merge(a, i, i + length, i + 2*length, aux);
 			if (i + length < hi)
