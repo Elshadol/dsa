@@ -22,7 +22,16 @@ static void _percolate_down(int a[], int N, int p)
 	a[p] = temp;
 }
 
-// a[0, N) used to be a max-heap,
+static inline void _heapificate(int a[], int N)
+{
+	// make max-heap start from the last internal elem in the bst
+	for (int i = PARENT_OF(N - 1); 0 <= i; --i) {
+		_percolate_down(a, N, i);
+	}
+}
+
+// a[0, N) used to be a max-heap before popping a[0],
+// after calling this function, a[0, p) is a max-heap
 static inline int _adjust_after_pop_heap(int a[], int N)
 {
 	int p = 0;
@@ -57,14 +66,6 @@ static inline void _push_heap(int a[], int last, int val)
 	}
 
 	a[i]  = val;
-}
-
-static inline void _heapificate(int a[], int N)
-{
-	// at beginning, i is the last internal node of the bst
-	for (int i = PARENT_OF(N - 1); 0 <= i; --i) {
-		_percolate_down(a, N, i);
-	}
 }
 
 void heap_sort(int a[], int lo, int hi)
