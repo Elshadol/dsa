@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -15,12 +14,12 @@ static struct {
 static struct {
 	int *b;
 	int *aux;
-} merge_stat;
+} sort_array;
 
-static inline void __init_merge_stat(int *a, int N)
+static inline void __init_sort_array(int *a, int N)
 {
-	merge_stat.b = a;
-	merge_stat.aux = (int *)malloc(sizeof(a[0]) * N);
+	sort_array.b = a;
+	sort_array.aux = (int *)malloc(sizeof(a[0]) * N);
 }
 
 // functions of stack operation
@@ -29,17 +28,10 @@ static inline void __init_run_stack(void)
 	run_stack.stack_size = 0;
 }
 
-static inline void __pop_stack(int *rb, int *rl)
+static inline void __push_run_stack(int rb, int rl)
 {
-	--run_stack.stack_size;
-	*rb = run_stack.run_base[run_stack.stack_size];
-	*rl = run_stack.run_len[run_stack.stack_size];
-}
-
-static inline void __push_run_stack(int run_base, int run_len)
-{
-	run_stack.run_base[run_stack.stack_size] = run_base;
-	run_stack.run_len[run_stack.stack_size] = run_len;
+	run_stack.run_base[run_stack.stack_size] = rb;
+	run_stack.run_len[run_stack.stack_size] = rl;
 	++run_stack.stack_size;
 }
 // end of stack operation
@@ -86,10 +78,8 @@ static void binary_insertion_sort(int a[], int lo, int hi, int start)
 			a[left + 1] = a[left];
 			break;
 		default:
-			while (n-- > 0) {
+			for ( ; n-- > 0; --start)
 				a[start] = a[start - 1];
-				--start;
-			}
 			break;
 		}
 		a[left] = pivot;
@@ -97,7 +87,7 @@ static void binary_insertion_sort(int a[], int lo, int hi, int start)
 }
 // end of insertion_sort()
 
-// functions for makeing runs
+// functions for making runs
 static inline void _reverse_range(int a[], int lo, int hi)
 {
 	while (lo < --hi) {
@@ -139,7 +129,7 @@ static int _count_run_and_make_ascending(int a[], int lo, int hi)
 }
 // end of functions of making runs
 
-// functions for merge
+// functions for merging
 static inline void _merge(int a[], int lo, int mi, int hi, int aux[])
 {
 	const int aux_len = mi - lo;
@@ -177,7 +167,7 @@ static inline void _merge_at(int i)
 	}
 	--run_stack.stack_size;
 
-	_merge(merge_stat.b, base1, base2, base2 + len2, merge_stat.aux);
+	_merge(sort_array.b, base1, base2, base2 + len2, sort_array.aux);
 }
 
 static void _merge_collapse()
@@ -207,7 +197,7 @@ static void _merge_force_collapse(void)
 		_merge_at(n);
 	}
 }
-// end of functions for merge
+// end of functions for merging
 
 void tim_sort(int a[], int lo, int hi)
 {
@@ -220,7 +210,7 @@ void tim_sort(int a[], int lo, int hi)
 		return;
 	}
 
-	__init_merge_stat(a, n);
+	__init_sort_array(a, n);
 	__init_run_stack();
 
 	int min_run_len = _compute_min_run_length(n);
