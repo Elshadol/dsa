@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-static const int MIN_MERGE = 32;
+#define MIN_MERGE 64
 
 static inline void insertion_sort(int a[], int lo, int hi)
 {
@@ -133,7 +133,6 @@ void merge_sort2(int a[], int lo, int hi)
 	int i = lo;
 	for (; i + run_len <= hi; i += run_len)
 		insertion_sort(a, i, i + run_len);
-
 	if (i < hi)
 		insertion_sort(a, i, hi);
 
