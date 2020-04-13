@@ -1,28 +1,33 @@
 #include <time.h>
 #include <stdlib.h>
 
-static const int QUICKSORT_MIN_RANGE = 16;
+#define INSERTIONSORT_THRESHOLD 16
 
 // beginning of heap_sort()
 #define PARENT_OF(i) (((i) - 1) / 2)
-#define LEFT_CHILD_OF(p) ((p) * 2 + 1)
 #define RIGHT_CHILD_OF(p) ((p) * 2 + 2)
 
 static void _percolate_down(int a[], int N, int p)
 {
 	int temp = a[p];
-	int c = LEFT_CHILD_OF(p);
+	int c = RIGHT_CHILD_OF(p);
 
-	while (c < N) {
-		if ((c + 1 < N) && (a[c] < a[c + 1]))
-			++c;
+	for (; c < N; p = c, c = RIGHT_CHILD_OF(p)) {
+		if (a[c] < a[c - 1])
+			--c;
 
 		if (a[c] < temp)
 			break;
 
 		a[p] = a[c];
-		p = c;
-		c = LEFT_CHILD_OF(p);
+	}
+
+	if (c == N) {
+		--c;
+		if (temp < a[c]) {
+			a[p] = a[c];
+			p = c;
+		}
 	}
 
 	a[p] = temp;
@@ -49,7 +54,6 @@ static inline int _adjust_after_pop_heap(int a[], int N)
 		c = RIGHT_CHILD_OF(p);
 	}
 
-	// no right child, only have left one
 	if (c == N) {
 		a[p] = a[c - 1];
 		p = c - 1;
@@ -58,7 +62,6 @@ static inline int _adjust_after_pop_heap(int a[], int N)
 	return p;
 }
 
-/* regard a[0, last) as a max-heap, and insert val to it */
 static inline void _push_heap(int a[], int last, int val)
 {
 	int i = last;
@@ -99,7 +102,7 @@ static inline void swap(int *a, int *b)
 	*a = *b;
 	*b = t;
 }
-// a[lo, hi)
+
 static int _partition(int a[], int lo, int hi)
 {
 	swap(&a[lo], &a[lo + (rand() % (hi - lo))]);
@@ -107,7 +110,6 @@ static int _partition(int a[], int lo, int hi)
 	int pivot = a[lo];
 	int mi = lo;
 
-	// loop invariant: a[lo + 1, mi) < pivot
 	for (int k = lo + 1; k < hi; ++k) {
 		if (a[k] < pivot)
 			swap(&a[++mi], &a[k]);
@@ -126,7 +128,6 @@ static inline int _depth_limit(int n)
 	return k;
 }
 
-// beginning of __final_insertion_sort()
 static inline void _insertion_sort(int a[], int lo, int hi)
 {
 	for (int i = lo + 1; i < hi; ++i) {
@@ -140,77 +141,32 @@ static inline void _insertion_sort(int a[], int lo, int hi)
 	}
 }
 
-static void _binary_insertion_sort(int a[], int lo, int hi, int start)
-{
-	for (; start < hi; ++start) {
-		int pivot = a[start];
-
-		int left = lo;
-		int right = start;
-
-		while (left < right) {
-			int mid = left + (right - left) / 2;
-			if (pivot < a[mid])
-				right = mid;
-			else
-				left = mid + 1;
-		}
-
-		int n = start - left;
-		switch (n) {
-		case 2:
-			a[left + 2] = a[left + 1];
-		case 1:
-			a[left + 1] = a[left];
-			break;
-		default:
-			while (n-- > 0) {
-				a[start] = a[start - 1];
-				--start;
-			}
-			break;
-		}
-		a[left] = pivot;
-	}
-}
-
-static inline void _final_insertion_sort(int a[], int lo, int hi)
-{
-	if (hi - lo > QUICKSORT_MIN_RANGE) {
-		_insertion_sort(a, lo, QUICKSORT_MIN_RANGE);
-		_binary_insertion_sort(a, lo, hi, QUICKSORT_MIN_RANGE);
-	} else
-		_insertion_sort(a, lo, hi);
-}
-// end of __final_insertion_sort
-
 static void _introsort_loop(int a[], int lo, int hi, int depth_limit)
 {
-	while (hi - lo > QUICKSORT_MIN_RANGE) {
+	while (hi - lo > INSERTIONSORT_THRESHOLD) {
 		if (depth_limit == 0) {
 			heap_sort(a, lo, hi);
 			return;
 		}
 
 		--depth_limit;
-		int mi = _partition(a, lo, hi);
-		if (mi - lo > hi - mi) {
-			_introsort_loop(a, lo, mi, depth_limit);
-			lo = mi;
+		int cut = _partition(a, lo, hi);
+		if (cut - lo > hi - cut) {
+			_introsort_loop(a, lo, cut, depth_limit);
+			lo =  cut + 1;
 		} else {
-			_introsort_loop(a, mi + 1, hi, depth_limit);
-			hi = mi + 1;
+			_introsort_loop(a, cut, hi, depth_limit);
+			hi = cut;
 		}
 	}
+	_insertion_sort(a, lo, hi);
 }
 
 
-// ported from SGI STL sort()
 void intro_sort(int a[], int lo, int hi)
 {
 	if (hi - lo < 2)
 		return;
 
 	_introsort_loop(a, lo, hi, _depth_limit(hi - lo));
-	_final_insertion_sort(a, lo, hi);
 }
