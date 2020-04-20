@@ -1,4 +1,7 @@
 #include "avltree.h"
+#include <assert.h>
+
+#define AVL_HEIGHT(n) (((n) == NULL) ? -1 : (n)->avl_height)
 
 struct avl_node *avl_first(const struct avl_root *root)
 {
@@ -88,20 +91,11 @@ void avl_replace_node(struct avl_node *node, struct avl_node *replacer,
     *replacer = *node;
 }
 
-#if 0
-static inline int __avl_get_height(struct avl_node *node)
-{
-    return (node == NULL) ? -1 : node->avl_height;
-}
-#else
-#define __avl_get_height(n) \
-    (((n) == NULL) ? -1 : (n)->avl_height)
-#endif
 
 static inline void __avl_update_height(struct avl_node *node)
 {
-    int h0 = __avl_get_height(node->avl_left);
-    int h1 = __avl_get_height(node->avl_right);
+    int h0 = AVL_HEIGHT(node->avl_left);
+    int h1 = AVL_HEIGHT(node->avl_right);
 
     node->avl_height = ((h0 < h1) ? h1 : h0) + 1;
 }
@@ -167,26 +161,24 @@ __avl_rotate_left_right(struct avl_node *a, struct avl_root *root)
     struct avl_node *c = b->avl_right;
 
     a->avl_left = c->avl_right;
-    b->avl_right = c->avl_left;
-
-    c->avl_left = b;
-    c->avl_right = a;
-
-    c->avl_parent = a->avl_parent;
-    a->avl_parent = b->avl_parent = c;
-
     if (a->avl_left != NULL)
         a->avl_left->avl_parent = a;
 
+    b->avl_right = c->avl_left;
     if (b->avl_right != NULL)
         b->avl_right->avl_parent = b;
 
+    c->avl_parent = a->avl_parent;
     if (a->avl_parent == NULL)
         root->avl_node = c;
     else if (a->avl_parent->avl_left == a)
         a->avl_parent->avl_left = c;
     else
         a->avl_parent->avl_right = c;
+
+    c->avl_left = b;
+    c->avl_right = a;
+    a->avl_parent = b->avl_parent = c;
 
     __avl_update_height(a);
     __avl_update_height(b);
@@ -203,26 +195,24 @@ __avl_rotate_right_left(struct avl_node *a, struct avl_root *root)
         struct avl_node *c = b->avl_left;
 
         a->avl_right = c->avl_left;
-        b->avl_left = c->avl_right;
-
-        c->avl_left = a;
-        c->avl_right = b;
-
-        c->avl_parent = a->avl_parent;
-        a->avl_parent = b->avl_parent = c;
-
         if (a->avl_right != NULL)
                 a->avl_right->avl_parent = a;
 
-        if (b->avl_left->avl_parent)
+        b->avl_left = c->avl_right;
+        if (b->avl_left != NULL)
                 b->avl_left->avl_parent = b;
 
+        c->avl_parent = a->avl_parent;
         if (a->avl_parent == NULL)
                 root->avl_node = c;
         else if (a->avl_parent->avl_left == a)
                 a->avl_parent->avl_left = c;
         else
                 a->avl_parent->avl_right = c;
+
+        c->avl_left = a;
+        c->avl_right = b;
+        a->avl_parent = b->avl_parent = c;
 
         __avl_update_height(a);
         __avl_update_height(b);
@@ -234,84 +224,39 @@ __avl_rotate_right_left(struct avl_node *a, struct avl_root *root)
 static void __avl_rebalance_to_root(struct avl_node *node,
                                     struct avl_root *root)
 {
-    while (node != NULL) {
-        int h0 = __avl_get_height(node->avl_left);
-        int h1 = __avl_get_height(node->avl_right);
+    for ( ; node != NULL; node = node->avl_parent) {
+        int h0 = AVL_HEIGHT(node->avl_left);
+        int h1 = AVL_HEIGHT(node->avl_right);
         int balancefactor = h0 - h1;
         int height = ((h0 < h1) ? h1 : h0) + 1;
 
-        //If height of the node didn't change, just return, because
-        //the  height of the nodes above must keep the same
         if (node->avl_height == height)
             return;
         else
             node->avl_height = height;
 
-        if (balancefactor < -1) {  // right heavy
+        if (balancefactor < -1) {
             struct avl_node *right = node->avl_right;
-            int rh0 = __avl_get_height(right->avl_left);
-            int rh1 = __avl_get_height(right->avl_right);
+            int rh0 = AVL_HEIGHT(right->avl_left);
+            int rh1 = AVL_HEIGHT(right->avl_right);
 
-            if (rh0 > rh1)  // left height
-                    node = __avl_rotate_right_left(node, root);
-            else
-                    node = __avl_rotate_left(node, root);
-
+			node = (rh0 > rh1) ?  __avl_rotate_right_left(node, root) :
+				__avl_rotate_left(node, root);
         } else if (1 < balancefactor) {
             struct avl_node *left = node->avl_left;
-            int lh0 = __avl_get_height(left->avl_left);
-            int lh1 = __avl_get_height(left->avl_right);
+            int lh0 = AVL_HEIGHT(left->avl_left);
+            int lh1 = AVL_HEIGHT(left->avl_right);
 
-            if (lh0 < lh1)
-                    node = __avl_rotate_left_right(node, root);
-            else
-                    node = __avl_rotate_right(node, root);
-        }
-        node = node->avl_parent;
+			node = (lh0 < lh1) ? __avl_rotate_left_right(node, root) :
+				__avl_rotate_right(node, root);
+		}
     }
 }
 
 
-void  avl_insert_rebalance(struct avl_node *node, struct avl_root *root)
+void avl_insert_rebalance(struct avl_node *node, struct avl_root *root)
 {
-#if 0
-    for (node = node->avl_parent; node != NULL; node = node->avl_parent) {
-        int h0 = __avl_get_height(node->avl_left);
-        int h1 = __avl_get_height(node->avl_right);
-        int balancefactor = h0 - h1;
-        int height = ((h0 < h1) ? h1 : h0) + 1;
-
-        //If height of the node didn't change, just return, because
-        //the  height of the nodes above must keep the same
-        if (node->avl_height == height)
-            return;
-        else
-            node->avl_height = height;
-
-        if (balancefactor < -1) {  // right heavy
-            struct avl_node *right = node->avl_right;
-            int rh0 = __avl_get_height(right->avl_left);
-            int rh1 = __avl_get_height(right->avl_right);
-
-            if (rh0 > rh1)
-                    right = __avl_rotate_right(right, root);
-
-                node = __avl_rotate_left(node, root);
-        } else if (1 < balancefactor) {
-            struct avl_node *left = node->avl_left;
-            int lh0 = __avl_get_height(left->avl_left);
-            int lh1 = __avl_get_height(left->avl_right);
-
-            if (lh0 < lh1)
-                    left = __avl_rotate_left(left, root);
-
-                node = __avl_rotate_right(node, root);
-        }
-
-    }
-#else
     __avl_rebalance_to_root(node->avl_parent, root);
-#endif
 }
 
 void avl_erase(struct avl_node *node, struct avl_root *root)
