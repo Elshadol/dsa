@@ -1,6 +1,6 @@
 #ifndef AVLTREE_INCLUDED
 #define AVLTREE_INCLUDED
-#include <stdlib.h>
+#include <stddef.h>
 
 // Code implemented in the fashion of linux/include/linux/rbtree.h
 struct avl_node {
