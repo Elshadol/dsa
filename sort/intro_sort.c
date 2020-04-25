@@ -61,5 +61,6 @@ void intro_sort(int a[], int lo, int hi)
 	if (hi - lo < 2)
 		return;
 
+	srand(time(NULL));
 	_introsort_loop(a, lo, hi, _depth_limit(hi - lo));
 }
