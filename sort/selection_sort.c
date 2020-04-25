@@ -1,3 +1,5 @@
+#include "sort_helper.h"
+
 void deselection_sort(int a[], int lo, int hi)
 {
   if (hi - lo < 2)
@@ -19,9 +21,7 @@ void deselection_sort(int a[], int lo, int hi)
 		}
     }
 
-    int tmp = a[left_pass];
-    a[left_pass] = a[min_elem_idx];
-    a[min_elem_idx] = tmp;
+	swap(&a[left_pass], &a[min_elem_idx]);
 
 	if (++left_pass == right_pass)
 		break;
@@ -34,9 +34,7 @@ void deselection_sort(int a[], int lo, int hi)
 
 
 	--right_pass;
-      tmp = a[right_pass];
-      a[right_pass] = a[max_elem_idx];
-      a[max_elem_idx] = tmp;
+	swap(&a[right_pass], &a[max_elem_idx]);
   }
 }
 
@@ -58,8 +56,6 @@ void selection_sort(int a[], int lo, int hi)
 		}
 
 		--right_pass;
-		int t = a[right_pass];
-		a[right_pass] = a[max_elem_idx];
-		a[max_elem_idx] = t;
+		swap(&a[right_pass], &a[max_elem_idx]);
 	}
 }

@@ -2,15 +2,9 @@
 #include <stdlib.h>
 
 #include "sort.h"
+#include "sort_helper.h"
 
 #define INSERTIONSORT_THRESHOLD  64
-
-static inline void swap(int *a, int *b)
-{
-	int t = *a;
-	*a = *b;
-	*b = t;
-}
 
 static int _partition(int a[], int lo, int hi)
 {
