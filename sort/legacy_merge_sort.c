@@ -1,47 +1,10 @@
 #include <stdlib.h>
 #include <assert.h>
-#include <stdio.h>
 
 #include "sort.h"
 #include "sort_helper.h"
 
 #define MIN_MERGE 128
-
-static void _merge_lo(int a[], int base1, int len1,
-					  int base2, int len2, int aux[])
-{
-	array_copy(a, base1, aux, 0, len1);
-
-	int cursor1 = 0;
-	int cursor2 = base2;
-	int dest = base1;
-
-	while (cursor1 < len1) {
-		if ((cursor2 < base2 + len2) && (a[cursor2] < aux[cursor1]))
-			a[dest++] = a[cursor2++];
-
-		if ((base2 + len2 <= cursor2) || (aux[cursor1] <= a[cursor2]))
-			a[dest++] = aux[cursor1++];
-	}
-}
-
-static void _merge_hi(int a[], int base1, int len1,
-							 int base2, int len2, int aux[])
-{
-	array_copy(a, base2, aux, 0, len2);
-
-	int cursor1 = base1 + len1 - 1;
-	int cursor2 = len2 - 1;
-	int dest = base2 + len2 - 1;
-
-	while (0 <= cursor2) {
-		if ((base1 <= cursor1) && (a[cursor1] > aux[cursor2]))
-			a[dest--] = a[cursor1--];
-
-		if ((cursor1 < base1) || (aux[cursor2] >= a[cursor1]))
-			a[dest--] = aux[cursor2--];
-	}
-}
 
 static void _merge(int a[], int lo, int mi, int hi, int aux[])
 {
@@ -66,7 +29,7 @@ static void _merge_sort(int a[], int lo, int hi, int aux[])
 	int mi = lo + (hi - lo)/2;
 	_merge_sort(a, lo, mi, aux);
 	_merge_sort(a, mi, hi, aux);
-	_merge_hi(a, lo, mi - lo, mi, hi - mi, aux);
+	_merge(a, lo, mi, hi, aux);
 }
 
 static void _inplace_merge(int a[], int lo, int mi, int hi)
