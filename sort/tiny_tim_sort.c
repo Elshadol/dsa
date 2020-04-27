@@ -25,7 +25,7 @@ static inline void _push_run_stack(int rb, int rl)
 	++_run_stack_size;
 }
 
-static inline int _compute_min_run_length(int n)
+static int _compute_min_run_length(int n)
 {
 	int r = 0;
 	while (n >= MIN_MERGE) {
