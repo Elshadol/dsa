@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <assert.h>
-#include <stdio.h>
 
 #include "sort_helper.h"
 #include "sort.h"
@@ -368,6 +367,8 @@ void galloping_merge_sort(int a[], int lo, int hi)
 
 	if (hi - lo < 2)
 		return;
+	if (hi - lo < MIN_MERGE)
+		insertion_sort(a, lo, hi);
 
 	int *aux = (int *)malloc(sizeof(a[0]) * (hi - lo) / 2);
 	if (aux != NULL) {
