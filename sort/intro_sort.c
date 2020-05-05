@@ -1,66 +1,151 @@
-#include <time.h>
+#include <stdlib.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 
-#include "sort_helper.h"
 #include "sort.h"
+#include "sort_helper.h"
 
-#define INSERTIONSORT_THRESHOLD 64
-
-static int _partition(int a[], int lo, int hi)
-{
-	swap(&a[lo], &a[lo + (rand() % (hi - lo))]);
-
-	int pivot = a[lo];
-	int mi = lo;
-
-	for (int k = lo + 1; k < hi; ++k) {
-		if (a[k] < pivot)
-			swap(&a[++mi], &a[k]);
-	}
-
-	swap(&a[mi], &a[lo]);
-	return mi;
-}
+#define INSERTIONSORT_THRESHOLD 47
 
 static inline int _depth_limit(int n)
 {
-	int k = 0;
-	for ( ; n > 1; n >>= 1)
-		++k;
+    int k = 0;
+    for ( ; n > 1; n >>= 1)
+        ++k;
 
-	return k;
+    return k;
+}
+
+static int _partition(int a[], int lo, int hi)
+{
+    int len = hi - lo;
+
+    if (len < 1000) {
+        swap(&a[lo], &a[lo + (rand() % (hi - lo))]);
+    } else {
+        int seventh = (len >> 3) + (len >> 6) + (len >> 9) + 1;
+        int e3 = lo + (len >> 1);
+        int e2 = e3 - seventh;
+        int e1 = e2 - seventh;
+        int e4 = e3 + seventh;
+        int e5 = e4 + seventh;
+
+        int tmp = a[e2];
+        if (tmp < a[e1]) {
+            a[e2] = a[e1];
+            a[e1] = tmp;
+        }
+
+        tmp = a[e3];
+        if (tmp < a[e1]) {
+            a[e3] = a[e2];
+            a[e2] = a[e1];
+            a[e1] = tmp;
+        } else if (tmp < a[e2]) {
+            a[e3] = a[e2];
+            a[e2] = tmp;
+        }
+
+        tmp = a[e4];
+        if (tmp < a[e1]) {
+            a[e4] = a[e3];
+            a[e3] = a[e2];
+            a[e2] = a[e1];
+            a[e1] = tmp;
+        } else if (tmp < a[e2]) {
+            a[e4] = a[e3];
+            a[e3] = a[e2];
+            a[e2] = tmp;
+        } else if (tmp < a[e3]) {
+            a[e4] = a[e3];
+            a[e3] = tmp;
+        }
+
+        tmp = a[e5];
+        if (tmp < a[e1]) {
+            a[e5] = a[e4];
+            a[e4] = a[e3];
+            a[e3] = a[e2];
+            a[e2] = a[e1];
+            a[e1] = tmp;
+        } else if (tmp < a[e2]) {
+            a[e5] = a[e4];
+            a[e4] = a[e3];
+            a[e3] = a[e2];
+            a[e2] = tmp;
+        } else if (tmp < a[e3]) {
+            a[e5] = a[e4];
+            a[e4] = a[e3];
+            a[e3] = tmp;
+        } else if (tmp < a[e4]) {
+            a[e5] = a[e4];
+            a[e4] = tmp;
+        }
+        swap(&a[lo], &a[e3]);
+    }
+
+    int pivot = a[lo];
+    int mi = lo;
+    for (int i = lo + 1; i < hi; ++i) {
+        if (a[i] < pivot)
+            swap(&a[++mi], &a[i]);
+    }
+    swap(&a[lo], &a[mi]);
+    return mi;
 }
 
 static void _introsort_loop(int a[], int lo, int hi, int depth_limit)
 {
-	while (hi - lo > INSERTIONSORT_THRESHOLD) {
-		if (depth_limit == 0) {
-			heap_sort(a, lo, hi);
-			return;
-		}
+    while (hi - lo > INSERTIONSORT_THRESHOLD) {
+        if (depth_limit == 0) {
+            heap_sort(a, lo, hi);
+            return;
+        }
 
-		--depth_limit;
-		int cut = _partition(a, lo, hi);
-		if (cut - lo > hi - cut) {
-			_introsort_loop(a, lo, cut, depth_limit);
-			lo =  cut + 1;
-		} else {
-			_introsort_loop(a, cut, hi, depth_limit);
-			hi = cut;
-		}
-	}
-	insertion_sort(a, lo, hi);
+        --depth_limit;
+        int mi = _partition(a, lo, hi);
+        if (mi - lo > hi - mi) {
+            _introsort_loop(a, lo, mi, depth_limit);
+            lo =  mi + 1;
+        } else {
+            _introsort_loop(a, mi, hi, depth_limit);
+            hi = mi;
+        }
+    }
 }
 
+static void _unguard_insertion_sort(int a[], int lo, int hi)
+{
+    for (int i = lo; i < hi; ++i) {
+        int tmp = a[lo];
+
+        int j = i;
+        while (tmp < a[j - 1]) {
+            a[j] = a[j - 1];
+            --j;
+        }
+        a[j] = tmp;
+    }
+}
+
+static void _final_insertion_sort(int a[], int lo, int hi)
+{
+    if (hi - lo < INSERTIONSORT_THRESHOLD) {
+        insertion_sort(a, lo, hi);
+    } else {
+        insertion_sort(a, lo, INSERTIONSORT_THRESHOLD);
+        _unguard_insertion_sort(a, INSERTIONSORT_THRESHOLD, hi);
+    }
+}
 
 void intro_sort(int a[], int lo, int hi)
 {
-	assert((0 <= lo) && (lo < hi));
+    assert((0 <= lo) && (lo < hi));
 
-	if (hi - lo < 2)
-		return;
+    if (hi - lo < 2)
+        return;
 
-	srand(time(NULL));
-	_introsort_loop(a, lo, hi, _depth_limit(hi - lo));
+    _introsort_loop(a, lo, hi, 2 * _depth_limit(hi - lo));
+    _final_insertion_sort(a, lo, hi);
 }
