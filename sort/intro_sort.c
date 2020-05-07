@@ -31,38 +31,52 @@ static int _partition(int a[], int lo, int hi)
         int e4 = e3 + seventh;
         int e5 = e4 + seventh;
 
-		if (a[e2] < a[e1]) {
-			int t = a[e2]; a[e2] = a[e1]; a[e1] = t;
-		}
+        if (a[e2] < a[e1]) {
+            int t = a[e2];
+            a[e2] = a[e1];
+            a[e1] = t;
+        }
         if (a[e3] < a[e2]) {
-            int t = a[e3]; a[e3] = a[e2]; a[e2] = t;
+            int t = a[e3];
+            a[e3] = a[e2];
+            a[e2] = t;
             if (t < a[e1]) {
-                a[e2] = a[e1]; a[e1] = t;
+                a[e2] = a[e1];
+                a[e1] = t;
             }
         }
         if (a[e4] < a[e3]) {
-            int t = a[e4]; a[e4] = a[e3]; a[e3] = t;
+            int t = a[e4];
+            a[e4] = a[e3];
+            a[e3] = t;
             if (t < a[e2]) {
-                a[e3] = a[e2]; a[e2] = t;
+                a[e3] = a[e2];
+                a[e2] = t;
                 if (t < a[e1]) {
-                    a[e2] = a[e1]; a[e1] = t;
+                    a[e2] = a[e1];
+                    a[e1] = t;
                 }
             }
         }
         if (a[e5] < a[e4]) {
-            int t = a[e5]; a[e5] = a[e4]; a[e4] = t;
+            int t = a[e5];
+            a[e5] = a[e4];
+            a[e4] = t;
             if (t < a[e3]) {
-                a[e4] = a[e3]; a[e3] = t;
+                a[e4] = a[e3];
+                a[e3] = t;
                 if (t < a[e2]) {
-                    a[e3] = a[e2]; a[e2] = t;
+                    a[e3] = a[e2];
+                    a[e2] = t;
                     if (t < a[e1]) {
-                        a[e2] = a[e1]; a[e1] = t;
+                        a[e2] = a[e1];
+                        a[e1] = t;
                     }
                 }
             }
         }
-		swap(&a[lo], &a[e3]);
-	}
+        swap(&a[lo], &a[e3]);
+    }
     int pivot = a[lo];
     int mi = lo;
     for (int i = lo + 1; i < hi; ++i) {
