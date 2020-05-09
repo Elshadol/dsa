@@ -15,20 +15,8 @@ struct rb_root {
     struct rb_node *rb_node;
 };
 
-//some macros about characteristics of rb_node
 #define rb_is_black(node) (((node) == NULL) || ((node)->rb_color == RB_BLACK))
-#define rb_is_red(node) (!rb_is_black(node))  /* node that is not black is red */
-#define rb_is_root(node) ((node)->rb_parent == NULL)
-#define rb_is_lchild(node) \
-    (rb_has_parent(node) && ((node) == ((node)->rb_parent->rb_left)))
-#define rb_is_rchild(node) \
-    (rb_has_parent(node) && ((node) == ((node)->rb_parent->rb_right)))
-#define rb_has_parent(node) ((node)->rb_parent != NULL)
-#define rb_has_lchild(node) ((node)->rb_left != NULL)
-#define rb_has_rchild(node) ((node)->rb_right != NULL)
-#define rb_has_both_child(node) (rb_has_lchild(node) && rb_has_rchild(node))
-#define rb_has_child(node) (rb_has_lchild(node) || rb_has_rchild(node))
-#define rb_is_leaf(node) (!rb_has_child(node))
+#define rb_is_red(node) (!rb_is_black(node))
 
 #ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE*)0)->MEMBER)

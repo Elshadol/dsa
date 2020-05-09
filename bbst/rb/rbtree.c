@@ -1,8 +1,5 @@
 #include "rbtree.h"
 
-#define RB_IS_BLACK(n) (((n) == NULL) || ((n)->rb_color == RB_BLACK))
-#define RB_IS_RED(n) !RB_IS_BLACK(n)
-
 static void __rb_rotate_left(struct rb_node *x, struct rb_root *root)
 {
     struct rb_node *y = x->rb_right;
@@ -105,10 +102,10 @@ void rb_insert_color(struct rb_node *node, struct rb_root *root)
     while ((parent = node->rb_parent) && (parent->rb_color == RB_RED)) {
         struct rb_node *gparent = parent->rb_parent;
         // gparent should turn to red in all cases
-        gparent->rb_color = RB_RED;
+		gparent->rb_color = RB_RED;
         if (parent == gparent->rb_left) {
             struct rb_node *uncle = gparent->rb_right;
-            if (RB_IS_RED(uncle)) {
+            if (rb_is_red(uncle)) {
                 uncle->rb_color = RB_BLACK;
                 parent->rb_color = RB_BLACK;
                 node = gparent;
@@ -125,7 +122,7 @@ void rb_insert_color(struct rb_node *node, struct rb_root *root)
             }
         } else {
             struct rb_node *uncle = gparent->rb_left;
-            if (RB_IS_RED(uncle)) {
+            if (rb_is_red(uncle)) {
                 uncle->rb_color = RB_BLACK;
                 parent->rb_color = RB_BLACK;
                 node = gparent;
@@ -153,7 +150,7 @@ static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
      * 1L: sibling of node has one left black child
      * R: parent is red
      */
-    while (RB_IS_BLACK(node) && (node != root->rb_node)) {
+    while (rb_is_black(node) && (node != root->rb_node)) {
         if (node == parent->rb_left) {
             struct rb_node *sibling = parent->rb_right;
             if (sibling->rb_color == RB_RED) {
@@ -163,14 +160,14 @@ static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
                 __rb_rotate_left(parent, root);
                 sibling = parent->rb_right;
             }
-            if (RB_IS_BLACK(sibling->rb_left) &&
-                    RB_IS_BLACK(sibling->rb_right)) {
+            if (rb_is_black(sibling->rb_left) &&
+                    rb_is_black(sibling->rb_right)) {
                 // BB-2-B, or BB-2-R
                 sibling->rb_color = RB_RED;
                 node = parent;
                 parent = node->rb_parent;
             } else {
-                if (RB_IS_RED(sibling->rb_left)) {
+                if (rb_is_red(sibling->rb_left)) {
                     // BB-0-R, RR-0-B, BB-1R-R, BB-1R-B
                     sibling->rb_left->rb_color = parent->rb_color;
                     parent->rb_color = RB_BLACK;
@@ -192,13 +189,13 @@ static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
                 __rb_rotate_right(parent, root);
                 sibling = parent->rb_left;
             }
-            if (RB_IS_BLACK(sibling->rb_left) &&
-                    RB_IS_BLACK(sibling->rb_right)) {
+            if (rb_is_black(sibling->rb_left) &&
+                    rb_is_black(sibling->rb_right)) {
                 sibling->rb_color = RB_RED;
                 node = parent;
                 parent = node->rb_parent;
             } else {
-                if (RB_IS_RED(sibling->rb_right)) {
+                if (rb_is_red(sibling->rb_right)) {
                     sibling->rb_right->rb_color = parent->rb_color;
                     parent->rb_color = RB_BLACK;
                     __rb_rotate_left_right(parent, root);
