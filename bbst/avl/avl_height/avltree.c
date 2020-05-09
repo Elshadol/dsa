@@ -216,7 +216,6 @@ void avl_insert_rebalance(struct avl_node *node, struct avl_root *root)
                     node = node->avl_parent;
                 }
                 __avl_update_height(node->avl_left);
-                __avl_update_height(node);
             } else if (1 < balancefactor) {
                 struct avl_node *left = node->avl_left;
                 int lh0 = AVL_HEIGHT(left->avl_left);
@@ -230,8 +229,8 @@ void avl_insert_rebalance(struct avl_node *node, struct avl_root *root)
                     node = node->avl_parent;
                 }
                 __avl_update_height(node->avl_right);
-                __avl_update_height(node);
             }
+			__avl_update_height(node);
             return;
         }
     }
