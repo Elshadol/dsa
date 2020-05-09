@@ -104,6 +104,7 @@ void rb_insert_color(struct rb_node *node, struct rb_root *root)
     struct rb_node *parent;
     while ((parent = node->rb_parent) && (parent->rb_color == RB_RED)) {
         struct rb_node *gparent = parent->rb_parent;
+        // gparent should turn to red in all cases
         gparent->rb_color = RB_RED;
         if (parent == gparent->rb_left) {
             struct rb_node *uncle = gparent->rb_right;
@@ -113,6 +114,7 @@ void rb_insert_color(struct rb_node *node, struct rb_root *root)
                 node = gparent;
             } else {
                 if (node == parent->rb_right) {
+                    // using double rotation adopted from avltree
                     node->rb_color = RB_BLACK;
                     __rb_rotate_left_right(gparent, root);
                 } else {
@@ -145,26 +147,36 @@ void rb_insert_color(struct rb_node *node, struct rb_root *root)
 static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
                              struct rb_root *root)
 {
+    /* The following is the meaning of BB-1L-R,
+     * then notations similiar to BB-1L-R are easily to understand.
+     * BB: double black
+     * 1L: sibling of node has one left black child
+     * R: parent is red
+     */
     while (RB_IS_BLACK(node) && (node != root->rb_node)) {
         if (node == parent->rb_left) {
             struct rb_node *sibling = parent->rb_right;
             if (sibling->rb_color == RB_RED) {
+                // BB-3, this case will turn to BB-1, or BB-2-R
                 sibling->rb_color = RB_BLACK;
                 parent->rb_color = RB_RED;
                 __rb_rotate_left(parent, root);
                 sibling = parent->rb_right;
             }
             if (RB_IS_BLACK(sibling->rb_left) &&
-                RB_IS_BLACK(sibling->rb_right)) {
+                    RB_IS_BLACK(sibling->rb_right)) {
+                // BB-2-B, or BB-2-R
                 sibling->rb_color = RB_RED;
                 node = parent;
                 parent = node->rb_parent;
             } else {
                 if (RB_IS_RED(sibling->rb_left)) {
+                    // BB-0-R, RR-0-B, BB-1R-R, BB-1R-B
                     sibling->rb_left->rb_color = parent->rb_color;
                     parent->rb_color = RB_BLACK;
                     __rb_rotate_right_left(parent, root);
                 } else {
+                    // BB-1L-R, BB-1L-B
                     sibling->rb_color = parent->rb_color;
                     sibling->rb_right->rb_color = RB_BLACK;
                     parent->rb_color = RB_BLACK;
@@ -181,7 +193,7 @@ static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
                 sibling = parent->rb_left;
             }
             if (RB_IS_BLACK(sibling->rb_left) &&
-                RB_IS_BLACK(sibling->rb_right)) {
+                    RB_IS_BLACK(sibling->rb_right)) {
                 sibling->rb_color = RB_RED;
                 node = parent;
                 parent = node->rb_parent;
@@ -200,13 +212,13 @@ static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
             }
         }
     }
-	if (node != NULL)
-		node->rb_color = RB_BLACK;
+    if (node != NULL)
+        node->rb_color = RB_BLACK;
 }
 
 void rb_erase(struct rb_node *node, struct rb_root *root)
 {
-	int color;
+    int color;
     struct rb_node *parent, *child;
 
     if ((node->rb_left != NULL) && (node->rb_right != NULL)) {
@@ -215,7 +227,7 @@ void rb_erase(struct rb_node *node, struct rb_root *root)
             replacer = replacer->rb_left;
 
         child = replacer->rb_right;
-		color = replacer->rb_color;
+        color = replacer->rb_color;
         node->rb_left->rb_parent = replacer;
         replacer->rb_left = node->rb_left;
 
@@ -241,7 +253,7 @@ void rb_erase(struct rb_node *node, struct rb_root *root)
         replacer->rb_color = node->rb_color;
     } else {
         parent = node->rb_parent;
-		color = node->rb_color;
+        color = node->rb_color;
         if (node->rb_left == NULL)
             child = node->rb_right;
         else
@@ -257,8 +269,8 @@ void rb_erase(struct rb_node *node, struct rb_root *root)
         else
             parent->rb_right = child;
     }
-	if (color == RB_BLACK)
-		__rb_erase_color(child, parent, root);
+    if (color == RB_BLACK)
+        __rb_erase_color(child, parent, root);
 }
 
 struct rb_node *rb_first(const struct rb_root *root)
@@ -300,7 +312,7 @@ struct rb_node *rb_prev(const struct rb_node *node)
     } else {
         struct rb_node *parent;
         while (((parent = node->rb_parent) != NULL) &&
-               (node == parent->rb_left))
+                (node == parent->rb_left))
             node = parent;
         return parent;
     }
@@ -321,7 +333,7 @@ struct rb_node *rb_next(const struct rb_node *node)
     } else {
         struct rb_node *parent;
         while (((parent =  node->rb_parent) != NULL) &&
-               (node == parent->rb_right))
+                (node == parent->rb_right))
             node = parent;
         return parent;
     }
