@@ -75,56 +75,47 @@ struct avl_node *avl_next(const struct avl_node *node)
     }
 }
 
-static inline void  __avl_rotate_left(struct avl_node *node,
-                                      struct avl_root *root)
+static void __avl_rotate_left(struct avl_node *x, struct avl_root *root)
 {
-    struct avl_node *right = node->avl_right;
+    struct avl_node *y = x->avl_right;
 
-    node->avl_right = right->avl_left;
-    right->avl_left = node;
+    x->avl_right = y->avl_left;
+    if (y->avl_left != NULL)
+        y->avl_left->avl_parent = x;
 
-    right->avl_parent = node->avl_parent;
-    node->avl_parent = right;
+    y->avl_parent = x->avl_parent;
+    if (x->avl_parent == NULL)
+        root->avl_node = y;
+    else if (x == x->avl_parent->avl_left)
+        x->avl_parent->avl_left = y;
+    else
+        x->avl_parent->avl_right = y;
 
-    if (node->avl_right != NULL) {
-        node->avl_right->avl_parent = node;
-    }
-
-    if (right->avl_parent == NULL) {
-        root->avl_node = right;
-    } else if (right->avl_parent->avl_left == node) {
-        right->avl_parent->avl_left = right;
-    } else {
-        right->avl_parent->avl_right = right;
-    }
+    y->avl_left = x;
+    x->avl_parent = y;
 }
 
-static inline void __avl_rotate_right(struct avl_node *node,
-                                      struct avl_root *root)
+static void __avl_rotate_right(struct avl_node *x, struct avl_root *root)
 {
-    struct avl_node *left = node->avl_left;
+    struct avl_node *y = x->avl_left;
 
-    node->avl_left = left->avl_right;
-    left->avl_right = node;
+    x->avl_left = y->avl_right;
+    if (y->avl_right != NULL)
+        y->avl_right->avl_parent = x;
 
-    left->avl_parent = node->avl_parent;
-    node->avl_parent = left;
+    y->avl_parent = x->avl_parent;
+    if (x->avl_parent == NULL)
+        root->avl_node = y;
+    else if (x == x->avl_parent->avl_left)
+        x->avl_parent->avl_left = y;
+    else
+        x->avl_parent->avl_right = y;
 
-    if (node->avl_left != NULL) {
-        node->avl_left->avl_parent = node;
-    }
-
-    if (left->avl_parent == NULL) {
-        root->avl_node = left;
-    } else if (left->avl_parent->avl_left == node) {
-        left->avl_parent->avl_left = left;
-    } else {
-        left->avl_parent->avl_right = left;
-    }
+    y->avl_right = x;
+    x->avl_parent = y;
 }
 
-static void __avl_rotate_left_right(struct avl_node *a,
-                                    struct avl_root *root)
+static void __avl_rotate_left_right(struct avl_node *a, struct avl_root *root)
 {
     struct avl_node *b = a->avl_left;
     struct avl_node *c = b->avl_right;
@@ -135,28 +126,24 @@ static void __avl_rotate_left_right(struct avl_node *a,
     c->avl_left = b;
 
     c->avl_parent = a->avl_parent;
-    a->avl_parent = c;
-    b->avl_parent = c;
+    a->avl_parent = b->avl_parent = c;
 
-    if (a->avl_left != NULL) {
+    if (a->avl_left != NULL)
         a->avl_left->avl_parent = a;
-    }
 
-    if (b->avl_right != NULL) {
+
+    if (b->avl_right != NULL)
         b->avl_right->avl_parent = b;
-    }
 
-    if (c->avl_parent == NULL) {
+    if (c->avl_parent == NULL)
         root->avl_node = c;
-    } else if (c->avl_parent->avl_left == a) {
+    else if (c->avl_parent->avl_left == a)
         c->avl_parent->avl_left = c;
-    } else {
+    else
         c->avl_parent->avl_right = c;
-    }
 }
 
-static void __avl_rotate_right_left(struct avl_node *a,
-                                    struct avl_root *root)
+static void __avl_rotate_right_left(struct avl_node *a, struct avl_root *root)
 {
     struct avl_node *b = a->avl_right;
     struct avl_node *c = b->avl_left;
@@ -168,28 +155,23 @@ static void __avl_rotate_right_left(struct avl_node *a,
     c->avl_right = b;
 
     c->avl_parent = a->avl_parent;
-    a->avl_parent = c;
-    b->avl_parent = c;
+    a->avl_parent = b->avl_parent = c;
 
-    if (a->avl_right != NULL) {
+    if (a->avl_right != NULL)
         a->avl_right->avl_parent = a;
-    }
 
-    if (b->avl_left != NULL) {
+    if (b->avl_left != NULL)
         b->avl_left->avl_parent = b;
-    }
 
-    if (c->avl_parent == NULL) {
+    if (c->avl_parent == NULL)
         root->avl_node = c;
-    } else if (c->avl_parent->avl_left == a) {
+    else if (c->avl_parent->avl_left == a)
         c->avl_parent->avl_left = c;
-    } else {
+    else
         c->avl_parent->avl_right = c;
-    }
 }
 
-void avl_insert_rebalance(struct avl_node *node,
-                          struct avl_root *root)
+void avl_insert_rebalance(struct avl_node *node, struct avl_root *root)
 {
     while (node != root->avl_node) {
         struct avl_node *parent = node->avl_parent;
@@ -200,7 +182,6 @@ void avl_insert_rebalance(struct avl_node *node,
             } else {
                 if (node->avl_bf == AVL_LEFT_HEAVY) {
                     struct avl_node *c = node->avl_left;
-                    assert(c != NULL);
                     switch (c->avl_bf) {
                     case AVL_LEFT_HEAVY:
                         parent->avl_bf = AVL_BALANCED;
@@ -223,8 +204,6 @@ void avl_insert_rebalance(struct avl_node *node,
                     parent->avl_bf = AVL_BALANCED;
                     node->avl_bf = AVL_BALANCED;
                     __avl_rotate_left(parent, root);
-                } else {
-                    assert(0);
                 }
             }
             return;
@@ -243,7 +222,6 @@ void avl_insert_rebalance(struct avl_node *node,
                     __avl_rotate_right(parent, root);
                 } else if (node->avl_bf == AVL_RIGHT_HEAVY) {
                     struct avl_node *c = node->avl_right;
-                    assert(c != NULL);
                     switch (c->avl_bf) {
                     case AVL_LEFT_HEAVY:
                         parent->avl_bf = AVL_RIGHT_HEAVY;
@@ -262,8 +240,6 @@ void avl_insert_rebalance(struct avl_node *node,
                     }
                     c->avl_bf = AVL_BALANCED;
                     __avl_rotate_left_right(parent, root);
-                } else {
-                    assert(0);
                 }
             } else {
                 parent->avl_bf = AVL_BALANCED;
@@ -289,10 +265,8 @@ static void __avl_erase_rebalance(struct avl_node *node,
                 parent = parent->avl_parent;
             } else {
                 struct avl_node *right = parent->avl_right;
-                assert(right);
                 if (right->avl_bf == AVL_LEFT_HEAVY) {
                     struct avl_node *c = right->avl_left;
-                    assert(c != NULL);
                     switch (c->avl_bf) {
                     case AVL_LEFT_HEAVY:
                         parent->avl_bf = AVL_BALANCED;
@@ -321,10 +295,9 @@ static void __avl_erase_rebalance(struct avl_node *node,
                     }
                     __avl_rotate_left(parent, root);
                 }
-
                 node = parent->avl_parent;
                 parent = parent->avl_parent->avl_parent;
-                // if the bf of node Changes from -1 to 1,
+
                 if (node->avl_bf == AVL_LEFT_HEAVY)
                     return;
             }
@@ -343,10 +316,8 @@ static void __avl_erase_rebalance(struct avl_node *node,
                 parent = parent->avl_parent;
             } else {
                 struct avl_node *left = parent->avl_left;
-                assert(left);
                 if (left->avl_bf == AVL_RIGHT_HEAVY) {
                     struct avl_node *c = left->avl_right;
-                    assert(c != NULL);
                     switch (c->avl_bf) {
                     case AVL_LEFT_HEAVY:
                         parent->avl_bf = AVL_RIGHT_HEAVY;
@@ -375,7 +346,6 @@ static void __avl_erase_rebalance(struct avl_node *node,
                     }
                     __avl_rotate_right(parent, root);
                 }
-
                 node = parent->avl_parent;
                 parent = parent->avl_parent->avl_parent;
 
