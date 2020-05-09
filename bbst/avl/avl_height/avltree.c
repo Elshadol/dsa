@@ -267,7 +267,6 @@ static void __avl_post_erase(struct avl_node *node, struct avl_node *parent,
                     node = parent->avl_parent;
                 }
                 __avl_update_height(node->avl_left);
-                __avl_update_height(node);
             } else if (1 < bf) {
                 struct avl_node *left = parent->avl_left;
                 int lh0 = AVL_HEIGHT(left->avl_left);
@@ -281,8 +280,8 @@ static void __avl_post_erase(struct avl_node *node, struct avl_node *parent,
                     node = parent->avl_parent;
                 }
                 __avl_update_height(node->avl_right);
-                __avl_update_height(node);
             }
+			__avl_update_height(node);
             parent = node->avl_parent;
 
             if (node->avl_height == old_height)
