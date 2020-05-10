@@ -1,6 +1,6 @@
 #include "rbtree.h"
 
-static void __rb_rotate_left(struct rb_node *x, struct rb_root *root)
+static inline void __rb_rotate_left(struct rb_node *x, struct rb_root *root)
 {
     struct rb_node *y = x->rb_right;
 
@@ -20,7 +20,7 @@ static void __rb_rotate_left(struct rb_node *x, struct rb_root *root)
     x->rb_parent = y;
 }
 
-static void __rb_rotate_right(struct rb_node *x, struct rb_root *root)
+static inline void __rb_rotate_right(struct rb_node *x, struct rb_root *root)
 {
     struct rb_node *y = x->rb_left;
 
@@ -46,20 +46,18 @@ static void __rb_rotate_left_right(struct rb_node *a, struct rb_root *root)
     struct rb_node *c = b->rb_right;
 
     a->rb_left = c->rb_right;
-    b->rb_right = c->rb_left;
-    c->rb_right = a;
-    c->rb_left = b;
-
-    c->rb_parent = a->rb_parent;
-    a->rb_parent = b->rb_parent = c;
-
     if (a->rb_left != NULL)
         a->rb_left->rb_parent = a;
 
-
+    b->rb_right = c->rb_left;
     if (b->rb_right != NULL)
         b->rb_right->rb_parent = b;
 
+    c->rb_right = a;
+    c->rb_left = b;
+    a->rb_parent = b->rb_parent = c;
+
+    c->rb_parent = a->rb_parent;
     if (c->rb_parent == NULL)
         root->rb_node = c;
     else if (c->rb_parent->rb_left == a)
@@ -74,20 +72,18 @@ static void __rb_rotate_right_left(struct rb_node *a, struct rb_root *root)
     struct rb_node *c = b->rb_left;
 
     a->rb_right = c->rb_left;
-    b->rb_left = c->rb_right;
-
-    c->rb_left = a;
-    c->rb_right = b;
-
-    c->rb_parent = a->rb_parent;
-    a->rb_parent = b->rb_parent = c;
-
     if (a->rb_right != NULL)
         a->rb_right->rb_parent = a;
 
+    b->rb_left = c->rb_right;
     if (b->rb_left != NULL)
         b->rb_left->rb_parent = b;
 
+    c->rb_left = a;
+    c->rb_right = b;
+    a->rb_parent = b->rb_parent = c;
+
+    c->rb_parent = a->rb_parent;
     if (c->rb_parent == NULL)
         root->rb_node = c;
     else if (c->rb_parent->rb_left == a)
@@ -96,6 +92,11 @@ static void __rb_rotate_right_left(struct rb_node *a, struct rb_root *root)
         c->rb_parent->rb_right = c;
 }
 
+/**
+ * rb_insert_color(): rebalance the tree after insertion
+ * @node: pointer to the new node
+ * @root: pointer to the structure cantains the root
+ */
 void rb_insert_color(struct rb_node *node, struct rb_root *root)
 {
     struct rb_node *parent;
@@ -111,10 +112,28 @@ void rb_insert_color(struct rb_node *node, struct rb_root *root)
                 node = gparent;
             } else {
                 if (node == parent->rb_right) {
-                    // using double rotation adopted from avltree
+                    /*
+                     * using double rotation adopted from avltree
+                     *        g(B)            n(B)
+                     *         /             /  \
+                     *        /             /    \
+                     *     p(R)     ->  p(R)    g(R)
+                     *        \
+                     *         \
+                     *        n(R)
+                     */
                     node->rb_color = RB_BLACK;
                     __rb_rotate_left_right(gparent, root);
                 } else {
+                    /*
+                     *          g(B)           p(B)
+                     *          /              /  \
+                     *         /              /    \
+                     *       p(R)     ->   n(R)   g(R)
+                     *       /
+                     *      /
+                     *    n(R)
+                     */
                     parent->rb_color = RB_BLACK;
                     __rb_rotate_right(gparent, root);
                 }
@@ -141,10 +160,17 @@ void rb_insert_color(struct rb_node *node, struct rb_root *root)
     root->rb_node->rb_color = RB_BLACK;
 }
 
+/**
+ * __rb_erase_color(): go up to rebalance the tree if needed
+ * @node: the successor of the deleted node
+ * @parent: parent of the node which used to be the deleted one's
+ * @root: pointer to the root
+ */
 static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
                              struct rb_root *root)
 {
-    /* The following is the meaning of BB-1L-R,
+    /*
+     * The following is the meaning of BB-1L-R,
      * then notations similiar to BB-1L-R are easily to understand.
      * BB: double black
      * 1L: sibling of node has one left black child
@@ -162,11 +188,19 @@ static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
             }
             if (rb_is_black(sibling->rb_left) &&
                 rb_is_black(sibling->rb_right)) {
-                // BB-2-B, or BB-2-R
+                /*
+                 * BB-2-B, or BB-2-R
+                 * if BB-2-R: swap color of sibling and parent, then stop
+                 * if BB-2-B: turn sibling to red, and go up
+                 */
                 sibling->rb_color = RB_RED;
                 node = parent;
                 parent = node->rb_parent;
             } else {
+                /*
+                 * compared to b-tree, sibling of the node is not too thin,
+                 * and has capability to give a key to node
+                 */
                 if (rb_is_red(sibling->rb_left)) {
                     // BB-0-R, RR-0-B, BB-1R-R, BB-1R-B
                     sibling->rb_left->rb_color = parent->rb_color;
