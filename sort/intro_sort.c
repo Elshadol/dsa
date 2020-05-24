@@ -1,11 +1,9 @@
 #include <stdlib.h>
-#include <stdlib.h>
 #include <assert.h>
 
 #include "sort.h"
 #include "sort_helper.h"
 
-#define MEDIAN5_THRESHOLD 1000
 #define INSERTIONSORT_THRESHOLD 47
 
 static inline int _depth_limit(int n)
@@ -17,74 +15,61 @@ static inline int _depth_limit(int n)
     return k;
 }
 
+static inline int _median3(const int a[], int e1, int e2, int e3)
+{
+    if (a[e1] < a[e2]) {
+        if (a[e2] < a[e3])
+            return e2;
+        else if (a[e1] < a[e3])
+            return e3;
+        else
+            return e1;
+    } else {
+        if (a[e1] < a[e3])
+            return e1;
+        else if (a[e2] < a[e3])
+            return e3;
+        else
+            return e2;
+    }
+}
+
+static inline int _ninther(const int a[], int lo, int hi)
+{
+    int e1 = lo;
+    int e2 = lo + ((hi - lo) >> 1);
+    int e3 = hi - 1;
+    int eighth = (hi - lo) / 8;
+    e1 = _median3(a, e1, e1 + eighth, e1 + 2*eighth);
+    e2 = _median3(a, e2 - eighth, e2, e2 + eighth);
+    e3 = _median3(a, e3 - 2*eighth, e3 - eighth, e3);
+    return _median3(a, e1, e2, e3);
+}
+
 static int _partition(int a[], int lo, int hi)
 {
-    int len = hi - lo;
+    int idx;
+    if (hi - lo < 1000)
+        idx = _median3(a, lo, (lo + hi) >> 1, hi - 1);
+    else
+        idx = _ninther(a, lo, hi);
+    swap(&a[lo], &a[idx]);
 
-    if (len < MEDIAN5_THRESHOLD) {
-        swap(&a[lo], &a[lo + (rand() % (hi - lo))]);
-    } else {
-        int seventh = (len >> 3) + (len >> 6) + (len >> 9) + 1;
-        int e3 = lo + (len >> 1);
-        int e2 = e3 - seventh;
-        int e1 = e2 - seventh;
-        int e4 = e3 + seventh;
-        int e5 = e4 + seventh;
-
-        if (a[e2] < a[e1]) {
-            int t = a[e2];
-            a[e2] = a[e1];
-            a[e1] = t;
-        }
-        if (a[e3] < a[e2]) {
-            int t = a[e3];
-            a[e3] = a[e2];
-            a[e2] = t;
-            if (t < a[e1]) {
-                a[e2] = a[e1];
-                a[e1] = t;
-            }
-        }
-        if (a[e4] < a[e3]) {
-            int t = a[e4];
-            a[e4] = a[e3];
-            a[e3] = t;
-            if (t < a[e2]) {
-                a[e3] = a[e2];
-                a[e2] = t;
-                if (t < a[e1]) {
-                    a[e2] = a[e1];
-                    a[e1] = t;
-                }
-            }
-        }
-        if (a[e5] < a[e4]) {
-            int t = a[e5];
-            a[e5] = a[e4];
-            a[e4] = t;
-            if (t < a[e3]) {
-                a[e4] = a[e3];
-                a[e3] = t;
-                if (t < a[e2]) {
-                    a[e3] = a[e2];
-                    a[e2] = t;
-                    if (t < a[e1]) {
-                        a[e2] = a[e1];
-                        a[e1] = t;
-                    }
-                }
-            }
-        }
-        swap(&a[lo], &a[e3]);
-    }
-    int pivot = a[lo];
-    int mi = lo;
-    for (int i = lo + 1; i < hi; ++i) {
-        if (a[i] < pivot)
-            swap(&a[++mi], &a[i]);
-    }
-    swap(&a[lo], &a[mi]);
-    return mi;
+    int i = lo;
+    int j = hi;
+    do {
+        do {
+            ++i;
+        } while ((i < hi) && (a[i] < a[lo]));
+        do {
+            --j;
+        } while (a[lo] < a[j]);
+        if (j < i)
+            break;
+        swap(&a[i], &a[j]);
+    } while (1);
+    swap(&a[lo], &a[j]);
+    return j;
 }
 
 static void _introsort_loop(int a[], int lo, int hi, int depth_limit)
@@ -107,27 +92,13 @@ static void _introsort_loop(int a[], int lo, int hi, int depth_limit)
     }
 }
 
-static void _unguard_insertion_sort(int a[], int lo, int hi)
-{
-    for (int i = lo; i < hi; ++i) {
-        int tmp = a[lo];
-
-        int j = i;
-        while (tmp < a[j - 1]) {
-            a[j] = a[j - 1];
-            --j;
-        }
-        a[j] = tmp;
-    }
-}
-
 static void _final_insertion_sort(int a[], int lo, int hi)
 {
     if (hi - lo < INSERTIONSORT_THRESHOLD) {
         insertion_sort(a, lo, hi);
     } else {
         insertion_sort(a, lo, INSERTIONSORT_THRESHOLD);
-        _unguard_insertion_sort(a, INSERTIONSORT_THRESHOLD, hi);
+        pair_insertion_sort(a, INSERTIONSORT_THRESHOLD, hi);
     }
 }
 

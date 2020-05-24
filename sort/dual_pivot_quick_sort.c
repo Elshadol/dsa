@@ -6,152 +6,128 @@
 
 #define INSERTION_SORT_THRESHOLD 47
 
-void dual_pivot_quick_sort(int x[], int lo, int hi)
+void dual_pivot_quick_sort(int a[], int lo, int hi)
 {
     int length = hi - lo;
 
-    if (length < 2)
-        return;
-
     if (length < INSERTION_SORT_THRESHOLD) {
-        insertion_sort(x, lo, hi);
+        insertion_sort(a, lo, hi);
         return;
     }
 
     int seventh = (length >> 3) + (length >> 6) + (length >> 9) + 1;
-
     int e3 = lo + (length >> 1);
     int e2 = e3 - seventh;
     int e1 = e2 - seventh;
     int e4 = e3 + seventh;
     int e5 = e4 + seventh;
 
-    if (x[e2] < x[e1]) {
-        int t = x[e2];
-        x[e2] = x[e1];
-        x[e1] = t;
+    if (a[e2] < a[e1]) {
+        int t = a[e2];
+        a[e2] = a[e1];
+        a[e1] = t;
     }
-    if (x[e3] < x[e2]) {
-        int t = x[e3];
-        x[e3] = x[e2];
-        x[e2] = t;
-        if (t < x[e1]) {
-            x[e2] = x[e1];
-            x[e1] = t;
+    if (a[e3] < a[e2]) {
+        int t = a[e3];
+        a[e3] = a[e2];
+        a[e2] = t;
+        if (t < a[e1]) {
+            a[e2] = a[e1];
+            a[e1] = t;
         }
     }
-    if (x[e4] < x[e3]) {
-        int t = x[e4];
-        x[e4] = x[e3];
-        x[e3] = t;
-        if (t < x[e2]) {
-            x[e3] = x[e2];
-            x[e2] = t;
-            if (t < x[e1]) {
-                x[e2] = x[e1];
-                x[e1] = t;
+    if (a[e4] < a[e3]) {
+        int t = a[e4];
+        a[e4] = a[e3];
+        a[e3] = t;
+        if (t < a[e2]) {
+            a[e3] = a[e2];
+            a[e2] = t;
+            if (t < a[e1]) {
+                a[e2] = a[e1];
+                a[e1] = t;
             }
         }
     }
-    if (x[e5] < x[e4]) {
-        int t = x[e5];
-        x[e5] = x[e4];
-        x[e4] = t;
-        if (t < x[e3]) {
-            x[e4] = x[e3];
-            x[e3] = t;
-            if (t < x[e2]) {
-                x[e3] = x[e2];
-                x[e2] = t;
-                if (t < x[e1]) {
-                    x[e2] = x[e1];
-                    x[e1] = t;
+    if (a[e5] < a[e4]) {
+        int t = a[e5];
+        a[e5] = a[e4];
+        a[e4] = t;
+        if (t < a[e3]) {
+            a[e4] = a[e3];
+            a[e3] = t;
+            if (t < a[e2]) {
+                a[e3] = a[e2];
+                a[e2] = t;
+                if (t < a[e1]) {
+                    a[e2] = a[e1];
+                    a[e1] = t;
                 }
             }
         }
     }
 
-    if ((x[e1] != x[e2]) && (x[e2] != x[e3]) &&
-        (x[e3] != x[e4]) && (x[e4] != x[e5])) {
-        swap(&x[lo], &x[e2]);
-        int pivot1 = x[lo];
+    if ((a[e1] != a[e2]) && (a[e2] != a[e3]) &&
+        (a[e3] != a[e4]) && (a[e4] != a[e5])) {
+        swap(&a[lo], &a[e2]);
+        int pivot1 = a[lo];
 
-        swap(&x[hi - 1],  &x[e4]);
-        int pivot2 = x[hi - 1];
+        swap(&a[hi - 1],  &a[e4]);
+        int pivot2 = a[hi - 1];
 
-        int lt = lo + 1;
-        while (x[lt] < pivot1)
-            ++lt;
+        int lt = lo;
+        while (a[++lt] < pivot1);
 
-        int gt = hi - 1;
-        while (x[gt - 1] > pivot2)
-            --gt;
+        int gt = hi;
+        while (a[--gt] > pivot2);
 
         for (int i = lt; i < gt; ++i) {
-            if (x[i] < pivot1) {
-                swap(&x[i], &x[lt++]);
-            } else if (x[i] > pivot2) {
-                while ((i < --gt) && (x[gt] > pivot2));
-                swap(&x[i], &x[gt]);
-                if (x[i] < pivot1)
-                    swap(&x[i], &x[lt++]);
+            if (a[i] < pivot1) {
+                swap(&a[i], &a[lt++]);
+            } else if (a[i] > pivot2) {
+                while ((i < --gt) && (a[gt] > pivot2));
+                swap(&a[i], &a[gt]);
+                if (a[i] < pivot1)
+                    swap(&a[i], &a[lt++]);
             }
         }
-        swap(&x[lo], &x[--lt]);
-        swap(&x[hi - 1], &x[gt++]);
-        dual_pivot_quick_sort(x, lo, lt);
-        dual_pivot_quick_sort(x, gt, hi);
-
-        if ((lt < e1) && (gt < e2)) {
-            while (x[lt] == pivot1) ++lt;
-
-            while (x[gt - 1] == pivot2) --gt;
-
-            for (int i = lt; i < gt; ++i) {
-                if (x[i] == pivot1) {
-                    swap(&x[i], &x[lt++]);
-                } else if (x[i] == pivot2) {
-                    while ((i < --gt) && (x[gt] == pivot2));
-                    swap(&x[i], &x[gt]);
-                    if (x[i] == pivot1)
-                        swap(&x[i], &x[lt++]);
-                }
-            }
-        }
-        dual_pivot_quick_sort(x, lt, gt);
+        swap(&a[lo], &a[--lt]);
+        swap(&a[hi - 1], &a[gt++]);
+        dual_pivot_quick_sort(a, lo, lt);
+        dual_pivot_quick_sort(a, lt, gt);
+        dual_pivot_quick_sort(a, gt, hi);
     } else {
-        swap(&x[lo],  &x[e3]);
-        int pivot = x[lo];
+        swap(&a[lo],  &a[e3]);
+        int eq1 = lo + 1;
+        int lt = eq1;
+        int eq2 = hi;
+        int gt = eq2;
 
-        int a = lo + 1;
-        int b = a;
-        int d = hi;
-        int c = d;
-
-        for ( ; ; ) {
-            while ((b < c) && (x[b] <= pivot)) {
-                if (x[b] == pivot)
-                    swap(&x[a++], &x[b]);
-                ++b;
+        do {
+            while ((lt < gt) && (a[lt] <= a[lo])) {
+                if (a[lt] == a[lo])
+                    swap(&a[eq1++], &a[lt]);
+                ++lt;
             }
-            while ((b < c) && (pivot <= x[c - 1])) {
-                if (x[c - 1] == pivot)
-                    swap(&x[--d], &x[c - 1]);
-                --c;
+            while ((lt < gt) && (a[lo] <= a[gt - 1])) {
+                if (a[gt - 1] == a[lo])
+                    swap(&a[--eq2], &a[gt - 1]);
+                --gt;
             }
-            if (b >= c) break;
-            swap(&x[b++], &x[--c]);
-        }
+            if (lt >= gt)
+                break;
+            swap(&a[lt++], &a[--gt]);
+        } while (1);
 
-        int lan1 = a - lo < b - a ? a  - lo : b - a;
-        for (int cursor1 = lo, cursor2 = b - lan1; lan1 > 0; --lan1)
-            swap(&x[cursor1++], &x[cursor2++]);
+        int len1 = eq1 - lo < lt - eq1 ? eq1 - lo : lt - eq1;
+        for (int c1 = lo, c2 = lt - len1; 0 < len1; --len1)
+            swap(&a[c1++], &a[c2++]);
 
-        int lan2 = d - c < hi - d ? d - c : hi - d;
-        for (int cursor1 = c, cursor2 = hi - lan2; lan2 > 0; --lan2)
-            swap(&x[cursor1++], &x[cursor2++]);
+        int len2 = eq2 - gt < hi - eq2 ? eq2 - gt : hi - eq2;
+        for (int c1 = gt, c2 = hi - len2; 0 < len2; --len2)
+            swap(&a[c1++], &a[c2++]);
 
-        dual_pivot_quick_sort(x, lo, lo + (b - a));
-        dual_pivot_quick_sort(x, hi - (d - c), hi);
+        dual_pivot_quick_sort(a, lo, lo + (lt - eq1));
+        dual_pivot_quick_sort(a, hi - (eq2 - gt), hi);
     }
 }
