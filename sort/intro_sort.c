@@ -1,17 +1,17 @@
 #include <stdlib.h>
-#include <assert.h>
 
 #include "sort.h"
 #include "sort_helper.h"
 
-#define INSERTIONSORT_THRESHOLD 47
+#define INSERTIONSORT_THRESHOLD 32
 
 static inline int _depth_limit(int n)
 {
     int k = 0;
-    for ( ; n > 1; n >>= 1)
+    while (n > 1) {
         ++k;
-
+        n >>= 1;
+    }
     return k;
 }
 
@@ -39,7 +39,7 @@ static inline int _ninther(const int a[], int lo, int hi)
     int e1 = lo;
     int e2 = lo + ((hi - lo) >> 1);
     int e3 = hi - 1;
-    int eighth = (hi - lo) / 8;
+    int eighth = (hi - lo) >> 3;
     e1 = _median3(a, e1, e1 + eighth, e1 + 2*eighth);
     e2 = _median3(a, e2 - eighth, e2, e2 + eighth);
     e3 = _median3(a, e3 - 2*eighth, e3 - eighth, e3);
@@ -49,23 +49,17 @@ static inline int _ninther(const int a[], int lo, int hi)
 static int _partition(int a[], int lo, int hi)
 {
     int idx;
-    if (hi - lo < 1000)
+    if (hi - lo < 1000) 
         idx = _median3(a, lo, (lo + hi) >> 1, hi - 1);
     else
         idx = _ninther(a, lo, hi);
     swap(&a[lo], &a[idx]);
 
-    int i = lo;
-    int j = hi;
+    int i = lo, j = hi;
     do {
-        do {
-            ++i;
-        } while ((i < hi) && (a[i] < a[lo]));
-        do {
-            --j;
-        } while (a[lo] < a[j]);
-        if (j < i)
-            break;
+        do { ++i; } while ((i < hi) && (a[i] < a[lo]));
+        do { --j; } while (a[lo] < a[j]);
+        if (j < i) break;
         swap(&a[i], &a[j]);
     } while (1);
     swap(&a[lo], &a[j]);
@@ -83,11 +77,11 @@ static void _introsort_loop(int a[], int lo, int hi, int depth_limit)
         --depth_limit;
         int mi = _partition(a, lo, hi);
         if (mi - lo > hi - mi) {
-            _introsort_loop(a, lo, mi, depth_limit);
-            lo =  mi + 1;
+            _introsort_loop(a, mi + 1, hi, depth_limit);
+            hi =  mi;
         } else {
-            _introsort_loop(a, mi, hi, depth_limit);
-            hi = mi;
+            _introsort_loop(a, lo, mi, depth_limit);
+            lo = mi + 1;
         }
     }
 }
@@ -104,11 +98,7 @@ static void _final_insertion_sort(int a[], int lo, int hi)
 
 void intro_sort(int a[], int lo, int hi)
 {
-    assert((0 <= lo) && (lo < hi));
-
-    if (hi - lo < 2)
-        return;
-
+    if (hi - lo < 2) return;
     _introsort_loop(a, lo, hi, 2 * _depth_limit(hi - lo));
     _final_insertion_sort(a, lo, hi);
 }
