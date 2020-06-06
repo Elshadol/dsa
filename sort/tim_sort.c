@@ -415,23 +415,23 @@ static inline void _merge_force_collapse(void)
 
 static void _insertion_sort(int a[], int lo, int hi, int start)
 {
-	for (int i = start + 1; i < hi; ++i) {
-		int pivot = a[i];
+    for (int i = start + 1; i < hi; ++i) {
+        int pivot = a[i];
 
-		int j = i;
-		if (pivot < a[lo]) {
-			while (lo < j) {
-				a[j] = a[j - 1];
-				--j;
-			}
-		} else {
-			 while (pivot < a[j - 1]) {
-				a[j] = a[j - 1];
-				--j;
-			 }
-		}
-		a[j] = pivot;
-	}
+        int j = i;
+        if (pivot < a[lo]) {
+            while (lo < j) {
+                a[j] = a[j - 1];
+                --j;
+            }
+        } else {
+            while (pivot < a[j - 1]) {
+                a[j] = a[j - 1];
+                --j;
+            }
+        }
+        a[j] = pivot;
+    }
 }
 
 void tim_sort(int a[], int lo, int hi)

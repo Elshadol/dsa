@@ -49,7 +49,7 @@ static inline int _ninther(const int a[], int lo, int hi)
 static int _partition(int a[], int lo, int hi)
 {
     int idx;
-    if (hi - lo < 1000) 
+    if (hi - lo < 1000)
         idx = _median3(a, lo, (lo + hi) >> 1, hi - 1);
     else
         idx = _ninther(a, lo, hi);
@@ -57,8 +57,12 @@ static int _partition(int a[], int lo, int hi)
 
     int i = lo, j = hi;
     do {
-        do { ++i; } while ((i < hi) && (a[i] < a[lo]));
-        do { --j; } while (a[lo] < a[j]);
+        do {
+            ++i;
+        } while ((i < hi) && (a[i] < a[lo]));
+        do {
+            --j;
+        } while (a[lo] < a[j]);
         if (j < i) break;
         swap(&a[i], &a[j]);
     } while (1);
