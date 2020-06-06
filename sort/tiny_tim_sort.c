@@ -3,29 +3,29 @@
 #include "sort_helper.h"
 #include "sort.h"
 
-#define MIN_MERGE 128
+#define MIN_MERGE 32
 
-static int *_aux_array;
+static int *__aux_array;
 static int *__a;
 
 #define RUN_STACK_SIZE 49
-int _run_base[RUN_STACK_SIZE];
-int _run_len[RUN_STACK_SIZE];
-int _run_stack_size;
+int __run_base[RUN_STACK_SIZE];
+int __run_len[RUN_STACK_SIZE];
+int __run_stack_size;
 
 static inline void _init_run_stack(void)
 {
-	_run_stack_size = 0;
+	__run_stack_size = 0;
 }
 
 static inline void _push_run_stack(int rb, int rl)
 {
-	_run_base[_run_stack_size] = rb;
-	_run_len[_run_stack_size] = rl;
-	++_run_stack_size;
+	__run_base[__run_stack_size] = rb;
+	__run_len[__run_stack_size] = rl;
+	++__run_stack_size;
 }
 
-static int _compute_min_run_length(int n)
+static inline int _min_run_length(int n)
 {
 	int r = 0;
 	while (n >= MIN_MERGE) {
@@ -53,51 +53,52 @@ static int _count_run_and_make_ascending(int a[], int lo, int hi)
 	return (i - lo);
 }
 
-static inline void _merge(int a[], int base1, int len1,
-					  int base2, int len2, int aux[])
+static void _merge(int a[], int lo, int mi, int hi, int aux[])
 {
-	array_copy(a, base1, aux, 0, len1);
+	int aux_len = mi - lo;
+	array_copy(a, lo, aux, 0, aux_len);
 
-	int cursor1 = 0;
-	int cursor2 = base2;
-	int dest = base1;
+  int cursor1 = 0;
+  int cursor2 = mi;
+  int dest = lo;
 
-	while (cursor1 < len1) {
-		if ((cursor2 < base2 + len2) && (a[cursor2] < aux[cursor1]))
-			a[dest++] = a[cursor2++];
+  while ((cursor1 < aux_len) && (cursor2 < hi)) {
+    if (aux[cursor1] <= a[cursor2])
+      a[dest++] = aux[cursor1++];
+    else
+      a[dest++] = a[cursor2++];
+  }
 
-		if ((base2 + len2 <= cursor2) || (aux[cursor1] <= a[cursor2]))
-			a[dest++] = aux[cursor1++];
-	}
+  if (cursor1 < aux_len) 
+    array_copy(aux, cursor1, a, dest, aux_len - cursor1);
 }
 
 static void _merge_at(int i)
 {
-	int base1 = _run_base[i];
-	int len1 = _run_len[i];
-	int base2 = _run_base[i + 1];
-	int len2 = _run_len[i + 1];
-	_run_len[i] = len1 + len2;
+	int base1 = __run_base[i];
+	int len1 = __run_len[i];
+	int base2 = __run_base[i + 1];
+	int len2 = __run_len[i + 1];
+	__run_len[i] = len1 + len2;
 
-	if (i == _run_stack_size - 3) {
-		_run_base[i + 1] = _run_base[i + 2];
-		_run_len[i + 1] = _run_len[i + 2];
+	if (i == __run_stack_size - 3) {
+		__run_base[i + 1] = __run_base[i + 2];
+		__run_len[i + 1] = __run_len[i + 2];
 	}
+	--__run_stack_size;
 
-	--_run_stack_size;
-
-	_merge(__a, base1, len1, base2, len2, _aux_array);
+	_merge(__a, base1, base2, base2 + len2, __aux_array);
 }
 
 static void _merge_collapse(void)
 {
-	while (_run_stack_size > 1) {
-		int n = _run_stack_size - 2;
-		if (((0 < n) && (_run_len[n - 1] <= _run_len[n] + _run_len[n + 1])) ||
-			((1 < n) && (_run_len[n - 2] <= _run_len[n - 1] + _run_len[n]))) {
-			if (_run_len[n - 1] < _run_len[n + 1])
+	while (__run_stack_size > 1) {
+		int n = __run_stack_size - 2;
+		if (((0 < n) && (__run_len[n - 1] <= __run_len[n] + __run_len[n + 1])) ||
+			((1 < n) && (__run_len[n - 2] <= __run_len[n - 1] + __run_len[n]))) {
+			if (__run_len[n - 1] < __run_len[n + 1])
 				--n;
-		} else if ((n < 0) || (_run_len[n] > _run_len[n + 1])) {
+		} else if ((n < 0) || (__run_len[n] > __run_len[n + 1])) {
 			break;
 		}
 		_merge_at(n);
@@ -106,12 +107,32 @@ static void _merge_collapse(void)
 
 static void _merge_force_collapse(void)
 {
-	while (_run_stack_size > 1) {
-		int n = _run_stack_size - 2;
-
-		if ((0 < n) && (_run_len[n - 1] < _run_len[n + 1]))
+	while (__run_stack_size > 1) {
+		int n = __run_stack_size - 2;
+		if ((0 < n) && (__run_len[n - 1] < __run_len[n + 1]))
 			--n;
 		_merge_at(n);
+	}
+}
+
+static void _insertion_sort(int a[], int lo, int hi, int start)
+{
+	for (int i = start + 1; i < hi; ++i) {
+		int pivot = a[i];
+
+		int j = i;
+		if (pivot < a[lo]) {
+			while (lo < j) {
+				a[j] = a[j - 1];
+				--j;
+			}
+		} else {
+			 while (pivot < a[j - 1]) {
+				a[j] = a[j - 1];
+				--j;
+			 }
+		}
+		a[j] = pivot;
 	}
 }
 
@@ -128,19 +149,18 @@ void tiny_tim_sort(int a[], int lo, int hi)
 
 	_init_run_stack();
 	__a = a;
-	_aux_array = (int *)malloc(sizeof(a[0]) * n);
-	if (_aux_array == NULL)
+	__aux_array = (int *)malloc(sizeof(a[0]) * n);
+	if (__aux_array == NULL)
 		exit(1);
 
-	int min_run_len = _compute_min_run_length(n);
+	int min_run_len = _min_run_length(n);
 	do {
 		int run_len = _count_run_and_make_ascending(a, lo, hi);
 		if (run_len < min_run_len) {
 			int force = n < min_run_len ? n : min_run_len;
-			insertion_sort(a, lo, lo + force);
+			_insertion_sort(a, lo, lo + force, lo + run_len);
 			run_len = force;
 		}
-
 		_push_run_stack(lo, run_len);
 		_merge_collapse();
 
