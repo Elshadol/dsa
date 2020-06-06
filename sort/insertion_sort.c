@@ -52,7 +52,6 @@ void binary_insertion_sort(int a[], int lo, int hi, int start)
 			a[left + 1] = a[left];
 			break;
 		default:
-			// move a[left, start), to [left + 1, start + 1)
 			while (n-- > 0) {
 				a[start] = a[start - 1];
 				--start;
@@ -60,5 +59,44 @@ void binary_insertion_sort(int a[], int lo, int hi, int start)
 			break;
 		}
 		a[left] = pivot;
+	}
+}
+
+/* assert elements before lo are sorted,
+ * and these elements are smallest in array,
+ * so these elements play a role of sentinal
+ */
+void pair_insertion_sort(int a[], int lo, int hi)
+{
+	int i = lo;
+	for ( ; i + 1 < hi; i += 2) {
+		int a1, a2;
+		if (a[i] < a[i + 1]) {
+			a1 = a[i + 1];
+			a2 = a[i];
+		} else {
+			a1 = a[i];
+			a2 = a[i + 1];
+		}
+		int j = i;
+		while (a1 < a[j - 1]) {
+			a[j + 1] = a[j - 1];
+			--j;
+		}
+		a[j + 1] = a1;
+
+		while (a2 < a[j - 1]) {
+			a[j] = a[j - 1];
+			--j;
+		}
+		a[j] = a2;
+	}
+
+	if (i < hi) {
+		int tmp = a[i];
+		int j = i;
+		for ( ; tmp < a[j - 1]; --j)
+			a[j] = a[j - 1];
+		a[j] = tmp;
 	}
 }
