@@ -99,9 +99,10 @@ static void __rb_rotate_right_left(struct rb_node *a, struct rb_root *root)
  */
 void rb_insert_color(struct rb_node *node, struct rb_root *root)
 {
-    struct rb_node *parent = node->rb_parent;
-    while (rb_is_red(parent)) {
+    struct rb_node *parent;
+    while ((parent = node->rb_parent) && (parent->rb_color == RB_RED)) {
         struct rb_node *gparent = parent->rb_parent;
+        // gparent should turn to red in all cases
         gparent->rb_color = RB_RED;
         if (parent == gparent->rb_left) {
             struct rb_node *uncle = gparent->rb_right;
@@ -111,13 +112,32 @@ void rb_insert_color(struct rb_node *node, struct rb_root *root)
                 node = gparent;
             } else {
                 if (node == parent->rb_right) {
+					/*
+                     * using double rotation adopted from avltree
+					 *        g(B)            n(B)
+					 *         /             /  \
+					 *        /             /    \
+					 *     p(R)     ->  p(R)    g(R)
+					 *        \
+					 *         \
+					 *        n(R)
+					 */
                     node->rb_color = RB_BLACK;
                     __rb_rotate_left_right(gparent, root);
                 } else {
+					/*
+					 *          g(B)           p(B)
+					 *          /              /  \
+					 *         /              /    \
+					 *       p(R)     ->   n(R)   g(R)
+					 *       /
+					 *      /
+					 *    n(R)
+					 */
                     parent->rb_color = RB_BLACK;
                     __rb_rotate_right(gparent, root);
                 }
-                return;
+                break;
             }
         } else {
             struct rb_node *uncle = gparent->rb_left;
@@ -133,10 +153,9 @@ void rb_insert_color(struct rb_node *node, struct rb_root *root)
                     parent->rb_color = RB_BLACK;
                     __rb_rotate_left(gparent, root);
                 }
-                return;
+                break;
             }
         }
-        parent = node->rb_parent;
     }
     root->rb_node->rb_color = RB_BLACK;
 }
@@ -150,10 +169,18 @@ void rb_insert_color(struct rb_node *node, struct rb_root *root)
 static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
                              struct rb_root *root)
 {
+	/*
+	 * The following is the meaning of BB-1L-R,
+	 * then notations similiar to BB-1L-R are easily to understand.
+	 * BB: double black
+	 * 1L: sibling of node has one left black child
+	 * R: parent is red
+   	 */
     while (rb_is_black(node) && (node != root->rb_node)) {
         if (node == parent->rb_left) {
             struct rb_node *sibling = parent->rb_right;
             if (sibling->rb_color == RB_RED) {
+                // BB-3, this case will turn to BB-1, or BB-2-R
                 sibling->rb_color = RB_BLACK;
                 parent->rb_color = RB_RED;
                 __rb_rotate_left(parent, root);
@@ -161,15 +188,26 @@ static void __rb_erase_color(struct rb_node *node, struct rb_node *parent,
             }
             if (rb_is_black(sibling->rb_left) &&
                 rb_is_black(sibling->rb_right)) {
+                /*
+				 * BB-2-B, or BB-2-R
+				 * if BB-2-R: swap color of sibling and parent, then stop
+				 * if BB-2-B: turn sibling to red, and go up
+				 */
                 sibling->rb_color = RB_RED;
                 node = parent;
                 parent = node->rb_parent;
             } else {
+				/*
+				 * compared to b-tree, sibling of the node is not too thin,
+				 * and has capability to give a key to node
+				 */
                 if (rb_is_red(sibling->rb_left)) {
+					// BB-0-R, RR-0-B, BB-1R-R, BB-1R-B
                     sibling->rb_left->rb_color = parent->rb_color;
                     parent->rb_color = RB_BLACK;
                     __rb_rotate_right_left(parent, root);
                 } else {
+                    // BB-1L-R, BB-1L-B
                     sibling->rb_color = parent->rb_color;
                     sibling->rb_right->rb_color = RB_BLACK;
                     parent->rb_color = RB_BLACK;
