@@ -1,42 +1,58 @@
 #include "sort.h"
 
-static inline void _sift_down(int a[], int top, int last)
+/* heap_sort is stolen from www.azillionmonkeys.com/qed/sorttest.c,
+ * partial_sort is stolen from SGI STL
+ */
+
+#define PARENT_OF(c) ((c - 1) >> 1)
+#define RIGHT_CHILD_OF(p) ((p + 1) << 1)
+
+static inline void _push_heap(int a[], int lo, int hole_idx,
+                              int top_idx, int value)
 {
-    int tmp = a[top];
-    int max_idx = top;
-    while (last >= (max_idx += max_idx)) {
-        if ((max_idx != last) && (a[max_idx] < a[max_idx + 1]))
-            ++max_idx;
-
-        if (tmp >= a[max_idx])
-            break;
-
-        a[top] = a[max_idx];
-        top = max_idx;
+    int parent = PARENT_OF(hole_idx);
+    while ((hole_idx > top_idx) && (a[lo + parent] < value)) {
+        a[lo + hole_idx] = a[lo + parent];
+        hole_idx = parent;
+        parent = PARENT_OF(hole_idx);
     }
+    a[lo + hole_idx] = value;
 }
 
-static inline void _sift_down0(int a[], int last)
+static inline void _adjust_heap(int a[], int lo, int hole_idx,
+                                int len, int value)
 {
-    int tmp = a[0];
-    if (a[0] < a[1]) {
-        tmp = a[1];
-        a[1] = a[0];
-        _sift_down(a, 1, last);
+    int top_idx = hole_idx;
+    int right_child = RIGHT_CHILD_OF(hole_idx);
+
+    while (right_child < len) {
+        if (a[lo + right_child] < a[lo + right_child - 1])
+            --right_child;
+
+        a[lo + hole_idx] = a[lo + right_child];
+        hole_idx = right_child;
+        right_child = RIGHT_CHILD_OF(hole_idx);
     }
-    a[0] = a[last];
-    a[last] = tmp;
+    if (right_child == len) {
+        --right_child;
+        a[lo + hole_idx] = a[lo + right_child];
+        hole_idx = right_child;
+    }
+    _push_heap(a, lo, hole_idx, top_idx, value);
 }
 
-static inline void _heap_sort(int a[], int n)
+static inline void _pop_heap(int a[], int lo, int hi,
+                             int result, int value)
 {
-    int i = n >> 1;
-    --n;
-    for ( ; 0 < i; --i)
-        _sift_down(a, i, n);
+    a[result] = a[lo];
+    _adjust_heap(a, lo, 0, hi - lo, value);
+}
 
-    for (i = n; 0 <= i; --i)
-        _sift_down0(a, i);
+static inline void _heapificate(int a[], int lo, int hi)
+{
+    int len = hi - lo;
+    for (int p = PARENT_OF(len - 1); 0 <= p; --p)
+        _adjust_heap(a, lo, p, len, a[lo + p]);
 }
 
 void heap_sort(int a[], int lo, int hi)
@@ -44,5 +60,62 @@ void heap_sort(int a[], int lo, int hi)
     if (hi - lo < 2)
         return;
 
-    _heap_sort(a + lo, hi - lo);
+    _heapificate(a, lo + 1, hi);
+    while (hi - lo > 1) {
+        int tmp = a[lo];
+        if (tmp < a[lo + 1]) {
+            tmp = a[lo + 1];
+            _adjust_heap(a, lo + 1, 0, hi - lo - 1, a[0]);
+        } 
+        --hi;
+        a[0] = a[hi];
+        a[hi] = tmp;
+    }
 }
+
+static inline void _sort_heap(int a[], int lo, int hi)
+{
+    while (hi - lo > 1) {
+        _pop_heap(a, lo, hi - 1, hi - 1, a[hi - 1]);
+        --hi;
+    }
+}
+
+void partial_sort(int a[], int lo, int mi, int hi)
+{
+    _heapificate(a, lo, mi);
+    for (int i = mi; i < hi; ++i) {
+        if (a[i] < a[lo])
+            _pop_heap(a, lo, mi, i, a[i]);
+    }
+    _sort_heap(a, lo, mi);
+}
+
+/*
+ *  a fun heap_sort implementation:
+    void heap_sort(int a[], int lo, int hi)
+    {
+      int mi = lo + ((hi - lo) >> 1);
+      _heapificate(a, lo, mi);
+      _heapificate(a, mi, hi);
+
+      while (hi - mi > 0) {
+        if (a[lo] > a[mi])
+          _pop_heap(a, lo, mi, hi - 1, a[hi - 1]);
+        else
+          _pop_heap(a, mi, hi - 1, hi - 1, a[hi - 1]);
+        --hi;
+      }
+      _sort_heap(a, lo, mi);
+    }
+
+    traditional heap sort implementation:
+    void heap_sort1(int a[], int lo, int hi)
+    {
+      _heapificate(a, lo, hi);
+      while (hi - lo > 1) {
+        _pop_heap(a, lo, hi - 1, hi - 1, a[hi - 1]);
+        --hi;
+      }
+    }
+*/
