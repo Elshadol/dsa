@@ -55,7 +55,8 @@ static int _partition(int a[], int lo, int hi)
         idx = _ninther(a, lo, hi);
     swap(&a[lo], &a[idx]);
 
-    int i = lo, j = hi;
+    int i = lo;
+    int j = hi;
     do {
         do {
             ++i;
@@ -79,13 +80,13 @@ static void _introsort_loop(int a[], int lo, int hi, int depth_limit)
         }
 
         --depth_limit;
-        int mi = _partition(a, lo, hi);
-        if (mi - lo > hi - mi) {
-            _introsort_loop(a, mi + 1, hi, depth_limit);
-            hi =  mi;
+        int cut = _partition(a, lo, hi);
+        if (hi - cut > cut - lo) {
+            _introsort_loop(a, lo, cut, depth_limit);
+            lo = cut + 1;
         } else {
-            _introsort_loop(a, lo, mi, depth_limit);
-            lo = mi + 1;
+            _introsort_loop(a, cut + 1, hi, depth_limit);
+            hi =  cut;
         }
     }
 }
