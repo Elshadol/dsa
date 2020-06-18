@@ -1,30 +1,10 @@
-#include "sort.h"
-
 void shell_sort(int a[], int lo, int hi)
 {
     int h = 1;
+    while (((h << 1) + (h >> 2)) < (hi - lo))
+        h = (h << 1) + (h >> 2) + 1;  // h = floor(2.25*h) + 1
 
-    while (h < (hi - lo)/3)
-        h = h*3 + 1;
-
-    for (; h > 0; h /= 3) {
-        for (int i = lo + h; i < hi; i++) {
-            int pivot = a[i];
-            int j = i;
-            for (; (lo + h <= j) && (pivot < a[j - h]); j -= h)
-                a[j] = a[j - h];
-
-            a[j] = pivot;
-        }
-    }
-}
-void shell_sort(int a[], int lo, int hi)
-{
-    int h = 1;
-    while (h < (hi - lo)/3)
-        h = h*3 + 1;
-
-    for (; h > 0; h /= 3) {
+    for (; 0 < h; h /= 2.25) {
         for (int i = 0; i < h; ++i) {
             for (int j = lo + i + h; j < hi; j += h) {
                 int pivot = a[i];
