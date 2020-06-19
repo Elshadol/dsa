@@ -136,6 +136,10 @@ static void _insertion_sort(int a[], int lo, int hi, int start)
     }
 }
 
+/* tiny_tim_sort is stolen from tim_sort and delete galloping mode.
+ * in fact , tiny_tim_sort is a stack-base merge sort, 
+ * whose run stack grows slower than Fibonacci sequence.
+ */
 void tiny_tim_sort(int a[], int lo, int hi)
 {
     int n = hi - lo;
