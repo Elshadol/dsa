@@ -5,9 +5,10 @@
 
 #define MIN_MERGE 64
 
-/* a naive implementation of peek_sort which is found from
- * an artical named 'Nearly-Optimal Mergesorts: Fast, Pratical Sorting Methods That Optimally Adapt to Existing Runs'
- * by J.Ian Munro and Sebstian Wild
+/* A naive implementation of peek_sort which is found from
+ * an article named 'Nearly-Optimal Mergesorts:
+ * Fast, Pratical Sorting Methods That Optimally Adapt to Existing Runs'
+ * by J.Ian Munro and Sebstian Wild.
  */
 
 static inline void _insertion_sort(int a[], int begin, int end, int start)
@@ -18,13 +19,19 @@ static inline void _insertion_sort(int a[], int begin, int end, int start)
     int i, j;
     for (i = start; i < end; ++i) {
         int tmp = a[i];
-        for (j = i; (begin < j) && (tmp < a[j - 1]); --j)
-            a[j] = a[j - 1];
+        if (tmp < a[begin]) {
+            for (j = i; begin < j; --j)
+                a[j] = a[j - 1];
+        } else {
+            for (j = i; tmp < a[j - 1]; --j)
+                a[j] = a[j - 1];
+        }
         a[j] = tmp;
     }
 }
 
-/* functions begin with '_r' means these function deal with  their data in reverse direction */
+/* Functions begin with '_r' mean these function deal with their data
+ * in reverse direction becuse of efficiency */
 static inline void _rinsertion_sort(int a[], int rbegin, int rend, int rstart)
 {
     if (rstart == rbegin)
@@ -33,8 +40,13 @@ static inline void _rinsertion_sort(int a[], int rbegin, int rend, int rstart)
     int i, j;
     for (i = rstart; rend < i; --i) {
         int tmp = a[i];
-        for (j = i; (j < rbegin) && (tmp > a[j + 1]); ++j)
-            a[j] = a[j + 1];
+        if (tmp > a[rbegin]) {
+            for (j = i; j < rbegin; ++j)
+                a[j] = a[j + 1];
+        } else {
+            for (j = i; tmp > a[j + 1]; ++j)
+                a[j] = a[j + 1];
+        }
         a[j] = tmp;
     }
 }
@@ -53,8 +65,7 @@ static int _count_run_and_make_ascending(int a[], int begin, int end)
         while ((i < end) && (a[i] >= a[i - 1]))
             ++i;
     }
-
-    return (i - begin);
+    return i - begin;
 }
 
 static int _rcount_run_and_make_ascending(int a[], int rbegin, int rend)
@@ -74,30 +85,26 @@ static int _rcount_run_and_make_ascending(int a[], int rbegin, int rend)
     return rbegin - i;
 }
 
-static int _extent_lo(int a[], int rbegin, int rend)
+static inline int _extent_lo(int a[], int rbegin, int rend)
 {
     int len = rbegin - rend;
     int n = _rcount_run_and_make_ascending(a, rbegin, rend);
-    if (n < MIN_MERGE) {
-        if (n < len) {
-            int force = len < MIN_MERGE ? len : MIN_MERGE;
-            _rinsertion_sort(a, rbegin, rbegin - force, rbegin - n);
-            return rbegin - force + 1;
-        }
+    if ((n < MIN_MERGE) && (n < len)) {
+        int force = len < MIN_MERGE ? len : MIN_MERGE;
+        _rinsertion_sort(a, rbegin, rbegin - force, rbegin - n);
+        return rbegin - force + 1;
     }
     return rbegin - n + 1;
 }
 
-static int _extent_hi(int a[], int begin, int end)
+static inline int _extent_hi(int a[], int begin, int end)
 {
     int len = begin - end;
     int n = _count_run_and_make_ascending(a, begin, end);
-    if (n < MIN_MERGE) {
-        if (n < len) {
-            int force = len < MIN_MERGE ? len : MIN_MERGE;
-            _insertion_sort(a, begin, begin + force, begin + n);
-            return begin + force;
-        }
+    if ((n < MIN_MERGE) && (n < len)) {
+        int force = len < MIN_MERGE ? len : MIN_MERGE;
+        _insertion_sort(a, begin, begin + force, begin + n);
+        return begin + force;
     }
     return begin + n;
 }
@@ -149,7 +156,7 @@ static void _merge_hi(int a[], int lo, int mi, int hi, int aux[])
         array_copy(aux, 0, a, dest - cursor1, cursor1 + 1);
 }
 
-/* 
+/*
  * array is divided into 3 parts: * [lsb, lse), [lse, hsb), [hsb, hse).
  * [lsb, lse) and [hsb, hse) are sorted
  */
@@ -165,16 +172,10 @@ static void _peek_sort(int a[], int lsb, int lse, int hsb, int hse, int aux[])
 
     int mi = lsb + ((hse - lsb) >> 1);
     if (mi < lse) {
-        if (hse - lse < MIN_MERGE)
-            _rinsertion_sort(a, hse - 1, lse - 1, hsb);
-        else
-            _peek_sort(a, lse, lse, hsb, hse, aux);
+        _peek_sort(a, lse, lse, hsb, hse, aux);
         _merge_hi(a, lsb, lse, hse, aux);
     } else if (hsb <= mi) {
-        if (hsb - lsb < MIN_MERGE)
-            _insertion_sort(a, lsb, hsb, lse);
-        else
-            _peek_sort(a, lsb, lse, hsb, hsb, aux);
+        _peek_sort(a, lsb, lse, hsb, hsb, aux);
         _merge_lo(a, lsb, hsb, hse, aux);
     } else {
         int i = _extent_lo(a, mi - 1, lse - 1);
