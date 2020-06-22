@@ -53,7 +53,7 @@ static int _count_run_and_make_ascending(int a[], int lo, int hi)
     return (i - lo);
 }
 
-static void _merge(int a[], int lo, int mi, int hi, int aux[])
+static void _merge_lo(int a[], int lo, int mi, int hi, int aux[])
 {
     int aux_len = mi - lo;
     array_copy(a, lo, aux, 0, aux_len);
@@ -73,6 +73,29 @@ static void _merge(int a[], int lo, int mi, int hi, int aux[])
         array_copy(aux, cursor1, a, dest, aux_len - cursor1);
 }
 
+static void _merge_hi(int a[], int lo, int mi, int hi, int aux[])
+{
+    int aux_len = hi - mi;
+    array_copy(a, mi, aux, 0, aux_len);
+
+    int cursor1 = aux_len - 1;
+    int cursor2 = mi - 1;
+    int dest = hi - 1;
+
+    while ((0 <= cursor1) && (lo <= cursor2)) {
+        if (aux[cursor1] < a[cursor2]) {
+            a[dest] = a[cursor2];
+            --cursor2;
+        } else {
+            a[dest] = aux[cursor1];
+            --cursor1;
+        }
+        --dest;
+    }
+    if (cursor1 >= 0)
+        array_copy(aux, 0, a, dest - cursor1, cursor1 + 1);
+}
+
 static void _merge_at(int i)
 {
     int base1 = __run_base[i];
@@ -87,7 +110,10 @@ static void _merge_at(int i)
     }
     --__run_stack_size;
 
-    _merge(__a, base1, base2, base2 + len2, __aux_array);
+    if (len1 < len2)
+        _merge_lo(__a, base1, base2, base2 + len2, __aux_array);
+    else
+        _merge_hi(__a, base1, base2, base2 + len2, __aux_array);
 }
 
 static void _merge_collapse(void)
@@ -156,7 +182,7 @@ void tiny_tim_sort(int a[], int lo, int hi)
 
     _init_run_stack();
     __a = a;
-    __aux_array = (int *)malloc(sizeof(a[0]) * n);
+    __aux_array = (int *)malloc(sizeof(a[0]) * n / 2);
     if (__aux_array == NULL)
         exit(1);
 

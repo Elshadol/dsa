@@ -112,19 +112,20 @@ static inline void _merge_at(int i)
     int len2 = _run_len[i + 1];
     _run_len[i] = len1 + len2;
     --_run_stack_size;
+
     if (len1 < len2)
-    _merge_lo(__a, base1, base2, base2 + len2, _aux_array);
-    else 
-    _merge_hi(__a, base1, base2, base2 + len2, _aux_array);
+        _merge_lo(__a, base1, base2, base2 + len2, _aux_array);
+    else
+        _merge_hi(__a, base1, base2, base2 + len2, _aux_array);
 }
 
 static inline void _merge_collapse(void)
 {
     while (_run_stack_size > 1) {
         int n = _run_stack_size - 2;
-        if (_run_len[n] < (_alpha * _run_len[n + 1])) 
-          _merge_at(n);
-        else 
+        if (_run_len[n] < (_alpha * _run_len[n + 1]))
+            _merge_at(n);
+        else
             break;
     }
 }
@@ -132,8 +133,8 @@ static inline void _merge_collapse(void)
 static inline void _merge_force_collapse(void)
 {
     while (_run_stack_size > 1) {
-      int n = _run_stack_size - 2;
-      _merge_at(n);
+        int n = _run_stack_size - 2;
+        _merge_at(n);
     }
 }
 
@@ -157,7 +158,7 @@ static void _insertion_sort(int a[], int begin, int end, int start)
 }
 
 /**
- * This kind of stack-base merge sort uses 'alpha-stack' strategy, 
+ * This kind of stack-base merge sort uses 'alpha-stack' strategy,
  * which consists in one rule: X > alpha * Y(X and Y are the topmost
  * 2 runs in run stack, alpha should bigger than 1)
  */
