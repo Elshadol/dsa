@@ -3,15 +3,15 @@
 #include "sort_helper.h"
 #include "sort.h"
 
-#define MIN_MERGE 32
+#define MIN_MERGE 64
 
 static int *__aux_array;
 static int *__a;
 
 #define RUN_STACK_SIZE 49
-int __run_base[RUN_STACK_SIZE];
-int __run_len[RUN_STACK_SIZE];
-int __run_stack_size;
+static int __run_base[RUN_STACK_SIZE];
+static int __run_len[RUN_STACK_SIZE];
+static int __run_stack_size;
 
 static inline void _init_run_stack(void)
 {
@@ -115,30 +115,33 @@ static void _merge_force_collapse(void)
     }
 }
 
-static void _insertion_sort(int a[], int lo, int hi, int start)
+static void _insertion_sort(int a[], int begin, int end, int start)
 {
-    for (int i = start + 1; i < hi; ++i) {
-        int pivot = a[i];
+    if (start == begin)
+        ++start;
 
-        int j = i;
-        if (pivot < a[lo]) {
-            while (lo < j) {
+    int i, j;
+    for (i = start; i < end; ++i) {
+        int tmp = a[i];
+        if (tmp < a[begin]) {
+            for (j = i; begin < j; --j)
                 a[j] = a[j - 1];
-                --j;
-            }
         } else {
-            while (pivot < a[j - 1]) {
+            for (j = i; tmp < a[j - 1]; --j)
                 a[j] = a[j - 1];
-                --j;
-            }
         }
-        a[j] = pivot;
+        a[j] = tmp;
     }
 }
 
-/* tiny_tim_sort is stolen from tim_sort and delete galloping mode.
- * in fact , tiny_tim_sort is a stack-base merge sort, 
- * whose run stack grows slower than Fibonacci sequence.
+/**
+ * tiny_tim_sort is stolen from tim_sort and galloping mode is removed.
+ * In fact , tiny_tim_sort is a stack-base merge sort.
+ * Let X, Y, Z be the topmost 3 runs, run stack of tim_sort must
+ * satisfy the following two principles:
+ *      1. Y > Z
+ *      2. X > Y + Z
+ * Thus, run stack size of tim_sort grows slower than Fibonacci sequence.
  */
 void tiny_tim_sort(int a[], int lo, int hi)
 {
