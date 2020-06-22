@@ -8,24 +8,52 @@
 #define MIN_GALLOP 7
 static int _min_gallop = MIN_GALLOP;
 
-static int *_tmp_array;
-static int *_aa;
+static int *_aux_array;
+static int *__a;
 
 #define RUN_STACK_SIZE 49
 static int _run_base[RUN_STACK_SIZE];
 static int _run_len[RUN_STACK_SIZE];
-static int _run_stack_size = 0;
+static int _run_stack_size;
 
 static inline void _init_run_stack(void)
 {
     _run_stack_size = 0;
 }
 
-static inline void _push_run_stack(int run_base, int run_len)
+static inline void _push_run_stack(int rb, int rl)
 {
-    _run_base[_run_stack_size] = run_base;
-    _run_len[_run_stack_size] = run_len;
+    _run_base[_run_stack_size] = rb;
+    _run_len[_run_stack_size] = rl;
     ++_run_stack_size;
+}
+
+static inline int _min_run_length(int n)
+{
+    int r = 0;
+    while (n >= MIN_MERGE) {
+        r |= (n & 1);
+        n >>= 1;
+    }
+    return (n + r);
+}
+
+static int _count_run_and_make_ascending(int a[], int lo, int hi)
+{
+    int i = lo + 1;
+    if (i == hi)
+        return 1;
+
+    if (a[i++] < a[lo]) {
+        while ((i < hi) && (a[i] < a[i - 1]))
+            ++i;
+        reverse_range(a, lo, i);
+    } else {
+        while ((i < hi) && (a[i] >= a[i - 1]))
+            ++i;
+    }
+
+    return (i - lo);
 }
 
 static int
@@ -33,11 +61,10 @@ _gallop_left(int key, const int a[], int base, int len, int hint)
 {
     int last_ofs = 0;
     int ofs = 1;
+
     if (key > a[base + hint]) {
         int max_ofs = len - hint;
-        while (ofs < max_ofs) {
-            if (key <= a[base + hint + ofs])
-                break;
+        while ((ofs < max_ofs) && (a[base + hint + ofs] < key)) {
             last_ofs = ofs;
             ofs = (ofs << 1) + 1;
             if (ofs <= 0)
@@ -50,9 +77,7 @@ _gallop_left(int key, const int a[], int base, int len, int hint)
         ofs += hint;
     } else {
         int max_ofs = hint + 1;
-        while (ofs < max_ofs) {
-            if (a[base + hint - ofs] < key)
-                break;
+        while ((ofs < max_ofs) && (key <= a[base + hint - ofs])) {
             last_ofs = ofs;
             ofs = (ofs << 1) + 1;
             if (ofs <= 0)
@@ -82,11 +107,10 @@ _gallop_right(int key, const int a[], int base, int len, int hint)
 {
     int ofs = 1;
     int last_ofs = 0;
+
     if (key < a[base + hint]) {
         int max_ofs = hint + 1;
-        while (ofs < max_ofs) {
-            if (a[base + hint - ofs] <= key)
-                break;
+        while ((ofs < max_ofs) && (key < a[base + hint - ofs])) {
             last_ofs = ofs;
             ofs = (ofs << 1) + 1;
             if (ofs <= 0)
@@ -100,11 +124,9 @@ _gallop_right(int key, const int a[], int base, int len, int hint)
         ofs = hint - tmp;
     } else {
         int max_ofs = len - hint;
-        while (ofs < max_ofs) {
-            if (key < a[base + hint + ofs])
-                break;
+        while ((ofs < max_ofs) && (key >= a[base + hint + ofs])) {
             last_ofs = ofs;
-            ofs = (ofs >> 1) + 1;
+            ofs = (ofs << 1) + 1;
             if (ofs <= 0)
                 ofs = max_ofs;
         }
@@ -330,34 +352,6 @@ _merge_hi(int a[], int base1, int len1, int base2, int len2, int tmp[])
     }
 }
 
-static inline int _compute_min_run_length(int n)
-{
-    int r = 0;
-    while (n >= MIN_MERGE) {
-        r |= (n & 1);
-        n >>= 1;
-    }
-    return (n + r);
-}
-
-static int _count_run_and_make_ascending(int a[], int lo, int hi)
-{
-    int i = lo + 1;
-    if (i == hi)
-        return 1;
-
-    if (a[i++] < a[lo]) {
-        while ((i < hi) && (a[i] < a[i - 1]))
-            ++i;
-        reverse_range(a, lo, i);
-    } else {
-        while ((i < hi) && (a[i] >= a[i - 1]))
-            ++i;
-    }
-
-    return (i - lo);
-}
-
 static void _merge_at(int i)
 {
     int base1 = _run_base[i];
@@ -372,20 +366,20 @@ static void _merge_at(int i)
     }
     --_run_stack_size;
 
-    int k = _gallop_right(_aa[base2], _aa, base1, len1, 0);
+    int k = _gallop_right(__a[base2], __a, base1, len1, 0);
     base1 += k;
     len1 -= k;
     if (len1 == 0)
         return;
 
-    len2 =  _gallop_left(_aa[base1 + len1 - 1], _aa, base2, len2, len2 - 1);
+    len2 =  _gallop_left(__a[base1 + len1 - 1], __a, base2, len2, len2 - 1);
     if (len2 == 0)
         return;
 
     if (len1 <= len2)
-        _merge_lo(_aa, base1, len1, base2, len2, _tmp_array);
+        _merge_lo(__a, base1, len1, base2, len2, _aux_array);
     else
-        _merge_hi(_aa, base1, len1, base2, len2, _tmp_array);
+        _merge_hi(__a, base1, len1, base2, len2, _aux_array);
 }
 
 static void _merge_collapse(void)
@@ -403,7 +397,7 @@ static void _merge_collapse(void)
     }
 }
 
-static inline void _merge_force_collapse(void)
+static void _merge_force_collapse(void)
 {
     while (_run_stack_size > 1) {
         int n = _run_stack_size - 2;
@@ -413,27 +407,34 @@ static inline void _merge_force_collapse(void)
     }
 }
 
-static void _insertion_sort(int a[], int lo, int hi, int start)
+static void _insertion_sort(int a[], int begin, int end, int start)
 {
-    for (int i = start + 1; i < hi; ++i) {
-        int pivot = a[i];
+    if (start == begin)
+        ++start;
 
-        int j = i;
-        if (pivot < a[lo]) {
-            while (lo < j) {
+    int i, j;
+    for (i = start; i < end; ++i) {
+        int tmp = a[i];
+        if (tmp < a[begin]) {
+            for (j = i; begin < j; --j)
                 a[j] = a[j - 1];
-                --j;
-            }
         } else {
-            while (pivot < a[j - 1]) {
+            for (j = i; tmp < a[j - 1]; --j)
                 a[j] = a[j - 1];
-                --j;
-            }
         }
-        a[j] = pivot;
+        a[j] = tmp;
     }
 }
 
+/**
+ * tiny_tim_sort is stolen from tim_sort and galloping mode is removed.
+ * In fact , tiny_tim_sort is a stack-base merge sort.
+ * Let X, Y, Z be the topmost 3 runs, run stack of tim_sort must
+ * satisfy the following two principles:
+ *      1. Y > Z
+ *      2. X > Y + Z
+ * Thus, run stack size of tim_sort grows slower than Fibonacci sequence.
+ */
 void tim_sort(int a[], int lo, int hi)
 {
     int n = hi - lo;
@@ -446,12 +447,12 @@ void tim_sort(int a[], int lo, int hi)
     }
 
     _init_run_stack();
-    _aa = a;
-    _tmp_array = (int *)malloc(sizeof(a[0]) * n);
-    if (_tmp_array == NULL)
+    __a = a;
+    _aux_array = (int *)malloc(sizeof(a[0]) * n / 2);
+    if (_aux_array == NULL)
         exit(1);
 
-    int min_run_len = _compute_min_run_length(n);
+    int min_run_len = _min_run_length(n);
     do {
         int run_len = _count_run_and_make_ascending(a, lo, hi);
         if (run_len < min_run_len) {
@@ -459,7 +460,6 @@ void tim_sort(int a[], int lo, int hi)
             _insertion_sort(a, lo, lo + force, lo + run_len);
             run_len = force;
         }
-
         _push_run_stack(lo, run_len);
         _merge_collapse();
 
