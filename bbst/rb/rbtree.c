@@ -223,7 +223,7 @@ void rb_erase(struct rb_node *node, struct rb_root *root)
         if (child)
             child->rb_parent = parent;
     }
-    if (color)
+    if (color == RB_BLACK)
         __rb_erase_color(child, parent, root);
 }
 
