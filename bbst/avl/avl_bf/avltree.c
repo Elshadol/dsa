@@ -1,5 +1,15 @@
 #include "avltree.h"
 
+static inline struct avl_node *avl_parent(const struct avl_node *n) {
+  return n->avl_parent;
+}
+
+static inline int avl_bf(const struct avl_node *n) { return n->avl_bf; }
+
+static inline void avl_set_parent(struct avl_node *n, struct avl_node *p) {
+  n->avl_parent = p;
+}
+
 static inline void __avl_switch_child(struct avl_node *old,
                                       struct avl_node *new,
                                       struct avl_node *parent,
